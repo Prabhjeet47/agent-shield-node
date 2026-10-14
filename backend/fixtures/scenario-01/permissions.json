@@ -1,0 +1,115 @@
+{
+  "comment": "This is the file the P4 remediation edits. Narrowing repo:contents:write from ** to src/** (and dropping its CAN_ACCESS edge to .github/workflows/**) is the one scoped change that breaks the attack path.",
+  "nodes": [
+    {
+      "label": "Permission",
+      "external_id": "fs:read",
+      "name": "fs:read",
+      "props": { "verb": "read", "scope": "src/**", "granted_by": "filesystem-mcp config" }
+    },
+    {
+      "label": "Permission",
+      "external_id": "repo:contents:write",
+      "name": "repo:contents:write",
+      "props": { "verb": "write", "scope": "**", "granted_by": "filesystem-mcp config" }
+    },
+    {
+      "label": "Permission",
+      "external_id": "net:egress",
+      "name": "net:egress",
+      "props": { "verb": "connect", "scope": "*", "granted_by": "github-mcp config" }
+    },
+    {
+      "label": "Resource",
+      "external_id": "repo-path:src/**",
+      "name": "src/**",
+      "props": { "kind": "file_class", "repository": "acme/payments-service", "sensitivity": "internal" }
+    },
+    {
+      "label": "Resource",
+      "external_id": "repo-path:.github/workflows/**",
+      "name": ".github/workflows/**",
+      "props": { "kind": "file_class", "repository": "acme/payments-service", "sensitivity": "confidential" }
+    },
+    {
+      "label": "Resource",
+      "external_id": "external-network",
+      "name": "external-network",
+      "props": { "kind": "network", "sensitivity": "internal" }
+    }
+  ],
+  "edges": [
+    {
+      "type": "HAS_PERMISSION",
+      "from": { "label": "Tool", "external_id": "filesystem-mcp:read_file" },
+      "to": { "label": "Permission", "external_id": "fs:read" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "HAS_PERMISSION",
+      "from": { "label": "Tool", "external_id": "filesystem-mcp:write_file" },
+      "to": { "label": "Permission", "external_id": "repo:contents:write" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "HAS_PERMISSION",
+      "from": { "label": "Tool", "external_id": "github-mcp:http_request" },
+      "to": { "label": "Permission", "external_id": "net:egress" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "needs_evidence",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "CAN_ACCESS",
+      "from": { "label": "Permission", "external_id": "fs:read" },
+      "to": { "label": "Resource", "external_id": "repo-path:src/**" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "CAN_ACCESS",
+      "from": { "label": "Permission", "external_id": "repo:contents:write" },
+      "to": { "label": "Resource", "external_id": "repo-path:src/**" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"],
+        "note": "Legitimate. The positive test asserts this survives the fix."
+      }
+    },
+    {
+      "type": "CAN_ACCESS",
+      "from": { "label": "Permission", "external_id": "repo:contents:write" },
+      "to": { "label": "Resource", "external_id": "repo-path:.github/workflows/**" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config", "ev-scope-eval"],
+        "note": "Scope ** matches .github/**. This is the edge the remediation removes."
+      }
+    },
+    {
+      "type": "CAN_ACCESS",
+      "from": { "label": "Permission", "external_id": "net:egress" },
+      "to": { "label": "Resource", "external_id": "external-network" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "needs_evidence",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    }
+  ]
+}

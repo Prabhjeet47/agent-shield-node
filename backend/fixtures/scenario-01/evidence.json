@@ -1,0 +1,94 @@
+{
+  "comment": "Evidence nodes are referenced by edge.evidence_ids. P1 stores them so every path step can be traced to a source; the SUPPORTED_BY edges land in P2 with Findings.",
+  "nodes": [
+    {
+      "label": "Evidence",
+      "external_id": "ev-workflow-yaml",
+      "name": "build.yml excerpt",
+      "props": {
+        "source_type": "github_workflow_config",
+        "source_ref": "acme/payments-service@9f2c1ab:.github/workflows/build.yml#L1-L14",
+        "collected_at": "2026-10-12T08:15:00Z",
+        "source_timestamp": "2026-10-09T16:02:11Z",
+        "content_hash": "sha256:3b1f9c2e7a44d1c0b8e6f05a9d7c2411be38ff07a1d9c4e5b20736d8aa91c5e4",
+        "collector_version": "fixture-loader/0.1.0",
+        "trust_level": "confirmed",
+        "excerpt": "on:\n  pull_request_target:\npermissions: write-all\njobs:\n  build:\n    steps:\n      - uses: ./.github/actions/deploy\n        env:\n          DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}",
+        "supports_claim": "build.yml runs with write-all permissions on pull_request_target and consumes PROD_DEPLOY_KEY.",
+        "limitations": "Static read of the file at one commit. Does not prove the job executed.",
+        "sanitized": true
+      }
+    },
+    {
+      "label": "Evidence",
+      "external_id": "ev-mcp-config",
+      "name": "agent + MCP declaration",
+      "props": {
+        "source_type": "agent_config",
+        "source_ref": "acme/payments-service@9f2c1ab:.agentshield/agents.yml",
+        "collected_at": "2026-10-12T08:15:02Z",
+        "source_timestamp": "2026-10-07T10:30:00Z",
+        "content_hash": "sha256:a07d4411f9c8b25e6d3a1f0c7b9e8452dd13c6a0f4b7e92d5c3810af6b2d7e91",
+        "collector_version": "fixture-loader/0.1.0",
+        "trust_level": "confirmed",
+        "excerpt": "agents:\n  - name: code-assistant\n    mcp_servers: [filesystem-mcp, github-mcp]\nfilesystem-mcp:\n  tools: [read_file, write_file]\n  permissions:\n    read:  src/**\n    write: '**'",
+        "supports_claim": "code-assistant may invoke write_file, whose write permission is scoped to the entire repository.",
+        "limitations": "Declared configuration. Effective permission at runtime is not verified here.",
+        "sanitized": true
+      }
+    },
+    {
+      "label": "Evidence",
+      "external_id": "ev-scope-eval",
+      "name": "scope match evaluation",
+      "props": {
+        "source_type": "deterministic_check",
+        "source_ref": "scope-matcher/glob",
+        "collected_at": "2026-10-12T08:15:03Z",
+        "content_hash": "sha256:c41e88b2f6309ad7e15b4c92f8071a3dd6025ee4b9c7301f8a2d64b05e97cf13",
+        "collector_version": "scope-matcher/0.1.0",
+        "trust_level": "confirmed",
+        "excerpt": "glob('**').matches('.github/workflows/build.yml') === true",
+        "supports_claim": "The write scope ** includes .github/workflows/**, so the permission reaches the workflow file class.",
+        "limitations": "Evaluates the declared glob only. Does not account for branch protection or CODEOWNERS.",
+        "sanitized": true
+      }
+    },
+    {
+      "label": "Evidence",
+      "external_id": "ev-agent-trace",
+      "name": "observed tool invocation",
+      "props": {
+        "source_type": "runtime_event",
+        "source_ref": "agent-telemetry/2026-10-09/run-4471",
+        "collected_at": "2026-10-12T08:15:04Z",
+        "source_timestamp": "2026-10-09T11:42:00Z",
+        "content_hash": "sha256:7e2b09cf4a1d853b6c0f27ae91d4b5380ca6f1927de40b85c3a671fd20e8b4a6",
+        "collector_version": "fixture-loader/0.1.0",
+        "trust_level": "strong",
+        "excerpt": "tool=write_file path=src/payments/refund.ts status=ok",
+        "supports_claim": "code-assistant actually invokes write_file, so CAN_INVOKE is observed and not merely declared.",
+        "limitations": "One observed call against src/**. No observed write to .github/**.",
+        "sanitized": true
+      }
+    },
+    {
+      "label": "Evidence",
+      "external_id": "ev-sca-report",
+      "name": "dependency scan record",
+      "props": {
+        "source_type": "scanner_result",
+        "source_ref": "osv-scanner@1.9.0:results.json#node-fetch",
+        "collected_at": "2026-10-12T08:15:05Z",
+        "content_hash": "sha256:19d7c0ab84f3e6215c7b9d04af83e1726b05cc9f4d81a37e62b0f59da4c71382",
+        "collector_version": "osv-scanner/1.9.0",
+        "trust_level": "confirmed",
+        "excerpt": "{\"package\":\"node-fetch\",\"version\":\"2.6.1\",\"advisory\":\"GHSA-r683-j2x4-v87g\",\"fixed\":\"2.6.7\"}",
+        "supports_claim": "node-fetch 2.6.1 falls inside the advisory's affected range.",
+        "limitations": "Manifest-level match. Reachability of the vulnerable code path is untested.",
+        "sanitized": true
+      }
+    }
+  ],
+  "edges": []
+}

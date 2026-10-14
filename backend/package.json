@@ -1,0 +1,16 @@
+{
+  "name": "agentshield-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "schema": "node src/scripts/schema.js",
+    "seed": "node src/scripts/seed.js",
+    "query:paths": "node src/scripts/queryPaths.js",
+    "verify": "node src/scripts/verify.js",
+    "reset": "node src/scripts/reset.js"
+  },
+  "dependencies": {
+    "falkordb": "^6.2.7"
+  }
+}

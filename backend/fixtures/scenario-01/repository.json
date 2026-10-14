@@ -1,0 +1,41 @@
+{
+  "nodes": [
+    {
+      "label": "Organization",
+      "external_id": "acme",
+      "name": "Acme Corp",
+      "props": { "slug": "acme" }
+    },
+    {
+      "label": "Project",
+      "external_id": "payments-platform",
+      "name": "Payments Platform",
+      "props": { "environment": "production" }
+    },
+    {
+      "label": "Repository",
+      "external_id": "acme/payments-service",
+      "name": "payments-service",
+      "props": {
+        "full_name": "acme/payments-service",
+        "default_branch": "main",
+        "visibility": "private",
+        "head_sha": "9f2c1ab"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "OWNS_PROJECT",
+      "from": { "label": "Organization", "external_id": "acme" },
+      "to": { "label": "Project", "external_id": "payments-platform" },
+      "props": { "assertion_source": "declared", "validation_status": "validated" }
+    },
+    {
+      "type": "CONTAINS_REPOSITORY",
+      "from": { "label": "Project", "external_id": "payments-platform" },
+      "to": { "label": "Repository", "external_id": "acme/payments-service" },
+      "props": { "assertion_source": "declared", "validation_status": "validated" }
+    }
+  ]
+}

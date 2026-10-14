@@ -1,0 +1,23 @@
+{
+  "id": "scenario-01",
+  "title": "Coding agent can rewrite the workflow that holds the production deploy key",
+  "tenant_id": "t_acme",
+  "project_id": "p_payments_platform",
+  "snapshot_sha": "fixture-0001",
+  "source": "fixture",
+  "narrative": [
+    "An internal AI coding agent has a write_file tool whose repo:contents:write permission is scoped to ** (the whole repo).",
+    "That scope reaches .github/workflows/**, which is where build.yml lives.",
+    "build.yml runs with permissions: write-all on pull_request_target and consumes the PROD_DEPLOY_KEY secret.",
+    "No single one of these is alarming. The chain is: the agent can edit the file that holds the production key.",
+    "The fix is one scoped change: narrow repo:contents:write from ** to src/**. The path disappears; the agent can still write application code."
+  ],
+  "files": [
+    "repository.json",
+    "workflows.json",
+    "agents.json",
+    "permissions.json",
+    "packages.json",
+    "evidence.json"
+  ]
+}

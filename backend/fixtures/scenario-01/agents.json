@@ -1,0 +1,97 @@
+{
+  "nodes": [
+    {
+      "label": "Agent",
+      "external_id": "code-assistant",
+      "name": "code-assistant",
+      "props": {
+        "kind": "ai_coding_agent",
+        "declared_in": ".agentshield/agents.yml",
+        "runtime": "ide_extension"
+      }
+    },
+    {
+      "label": "MCPServer",
+      "external_id": "filesystem-mcp",
+      "name": "filesystem-mcp",
+      "props": { "transport": "stdio", "version": "0.4.2" }
+    },
+    {
+      "label": "MCPServer",
+      "external_id": "github-mcp",
+      "name": "github-mcp",
+      "props": { "transport": "http", "version": "1.1.0" }
+    },
+    {
+      "label": "Tool",
+      "external_id": "filesystem-mcp:read_file",
+      "name": "read_file",
+      "props": { "server": "filesystem-mcp", "mutating": false }
+    },
+    {
+      "label": "Tool",
+      "external_id": "filesystem-mcp:write_file",
+      "name": "write_file",
+      "props": { "server": "filesystem-mcp", "mutating": true }
+    },
+    {
+      "label": "Tool",
+      "external_id": "github-mcp:http_request",
+      "name": "http_request",
+      "props": { "server": "github-mcp", "mutating": true }
+    }
+  ],
+  "edges": [
+    {
+      "type": "CONNECTS_TO",
+      "from": { "label": "Agent", "external_id": "code-assistant" },
+      "to": { "label": "MCPServer", "external_id": "filesystem-mcp" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "CONNECTS_TO",
+      "from": { "label": "Agent", "external_id": "code-assistant" },
+      "to": { "label": "MCPServer", "external_id": "github-mcp" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "CAN_INVOKE",
+      "from": { "label": "Agent", "external_id": "code-assistant" },
+      "to": { "label": "Tool", "external_id": "filesystem-mcp:read_file" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    },
+    {
+      "type": "CAN_INVOKE",
+      "from": { "label": "Agent", "external_id": "code-assistant" },
+      "to": { "label": "Tool", "external_id": "filesystem-mcp:write_file" },
+      "props": {
+        "assertion_source": "observed",
+        "validation_status": "validated",
+        "observed_at": "2026-10-09T11:42:00Z",
+        "evidence_ids": ["ev-mcp-config", "ev-agent-trace"]
+      }
+    },
+    {
+      "type": "CAN_INVOKE",
+      "from": { "label": "Agent", "external_id": "code-assistant" },
+      "to": { "label": "Tool", "external_id": "github-mcp:http_request" },
+      "props": {
+        "assertion_source": "declared",
+        "validation_status": "needs_evidence",
+        "evidence_ids": ["ev-mcp-config"]
+      }
+    }
+  ]
+}

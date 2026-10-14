@@ -1,0 +1,19 @@
+services:
+  falkordb:
+    # Pinned by digest: `latest` moves, and Cypher constraint/index syntax
+    # varies across releases. This digest = graph module v6.0.2.
+    image: falkordb/falkordb@sha256:107455e862a824e45e8e9f5a7fbfdf5e00a08b14e13eae2577c72fd9e3f59ba6
+    container_name: agentshield-falkordb
+    ports:
+      - "6380:6379"   # redis protocol — 6380 on the host, 6379 is taken locally
+      - "3100:3000"   # falkordb browser UI (3000 is taken by the dev API)
+    volumes:
+      - falkordb-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  falkordb-data:

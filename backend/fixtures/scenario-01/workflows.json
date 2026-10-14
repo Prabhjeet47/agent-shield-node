@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "label": "Workflow",
+      "external_id": "acme/payments-service:.github/workflows/build.yml",
+      "name": "build",
+      "props": {
+        "path": ".github/workflows/build.yml",
+        "permissions_raw": "write-all",
+        "triggers": ["pull_request_target", "push"],
+        "runner": "ubuntu-latest",
+        "comment": "resource_uid is a property join, not an edge: it points at the file-class Resource this workflow lives in, so the traversal can reach the secret without inventing a relationship type outside the blueprint's twenty.",
+        "resource_uid": "t_acme:Resource:repo-path:.github/workflows/**"
+      }
+    },
+    {
+      "label": "SecretReference",
+      "external_id": "acme/payments-service:PROD_DEPLOY_KEY",
+      "name": "PROD_DEPLOY_KEY",
+      "props": {
+        "sensitivity": "restricted",
+        "scope": "repository",
+        "comment": "Reference only. The graph never stores secret values."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "HAS_WORKFLOW",
+      "from": { "label": "Repository", "external_id": "acme/payments-service" },
+      "to": { "label": "Workflow", "external_id": "acme/payments-service:.github/workflows/build.yml" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-workflow-yaml"]
+      }
+    },
+    {
+      "type": "USES_SECRET",
+      "from": { "label": "Workflow", "external_id": "acme/payments-service:.github/workflows/build.yml" },
+      "to": { "label": "SecretReference", "external_id": "acme/payments-service:PROD_DEPLOY_KEY" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-workflow-yaml"]
+      }
+    }
+  ]
+}

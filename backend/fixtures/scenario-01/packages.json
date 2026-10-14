@@ -1,0 +1,45 @@
+{
+  "comment": "The contrast case. A real but ordinary dependency advisory — it exists so the demo can show the graph reordering priority, not just flagging things.",
+  "nodes": [
+    {
+      "label": "Package",
+      "external_id": "npm:node-fetch@2.6.1",
+      "name": "node-fetch",
+      "props": { "ecosystem": "npm", "version": "2.6.1", "manifest": "package.json" }
+    },
+    {
+      "label": "Vulnerability",
+      "external_id": "GHSA-r683-j2x4-v87g",
+      "name": "GHSA-r683-j2x4-v87g",
+      "props": {
+        "severity": "medium",
+        "affected_range": "<2.6.7",
+        "fixed_in": "2.6.7",
+        "summary": "node-fetch forwards secure headers to untrusted sites on redirect"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "CONTAINS_PACKAGE",
+      "from": { "label": "Repository", "external_id": "acme/payments-service" },
+      "to": { "label": "Package", "external_id": "npm:node-fetch@2.6.1" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-sca-report"]
+      }
+    },
+    {
+      "type": "AFFECTED_BY",
+      "from": { "label": "Package", "external_id": "npm:node-fetch@2.6.1" },
+      "to": { "label": "Vulnerability", "external_id": "GHSA-r683-j2x4-v87g" },
+      "props": {
+        "assertion_source": "static",
+        "validation_status": "validated",
+        "evidence_ids": ["ev-sca-report"],
+        "note": "Deterministic version-range match, not a name match."
+      }
+    }
+  ]
+}
