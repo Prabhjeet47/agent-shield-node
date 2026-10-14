@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anavykai · AgentShield Graph — Product &amp; Engineering Blueprint</title>
+<style>
+:root{
+  --bg:#0A0B14; --bg2:#10121F; --panel:#151828; --panel2:#1B1F33;
+  --line:#272B42; --line2:#343A57;
+  --txt:#E8EAF2; --txt2:#A7ADC4; --txt3:#737A96;
+  --teal:#2DD4BF; --violet:#8B5CF6; --blue:#60A5FA;
+  --red:#F87171; --amber:#FBBF24; --green:#4ADE80;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ---------- header ---------- */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(900px 420px at 78% -10%, rgba(139,92,246,.30), transparent 60%),
+    radial-gradient(700px 400px at 5% 110%, rgba(45,212,191,.16), transparent 60%),
+    linear-gradient(180deg,#0C0E1C,#0A0B14);}
+.hero .wrap{padding-top:64px;padding-bottom:52px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin:0 0 18px}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.1;margin:0 0 16px;letter-spacing:-.02em;font-weight:700}
+.lede{font-size:clamp(15px,2vw,18px);color:var(--txt2);max-width:780px;margin:0 0 28px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-family:var(--mono);font-size:11.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--txt2)}
+.pill.hot{border-color:rgba(45,212,191,.45);color:var(--teal);background:rgba(45,212,191,.08)}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;background:rgba(10,11,20,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:9px;padding-bottom:9px;scrollbar-width:thin}
+nav a{flex:0 0 auto;font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--txt3);text-decoration:none;padding:6px 11px;border-radius:7px;white-space:nowrap}
+nav a:hover{color:var(--teal);background:rgba(45,212,191,.09)}
+
+/* ---------- sections ---------- */
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+.sec-num{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;color:var(--violet);text-transform:uppercase;margin:0 0 10px}
+h2{font-size:clamp(22px,3.2vw,31px);margin:0 0 10px;letter-spacing:-.015em;font-weight:650}
+.sub{color:var(--txt2);margin:0 0 28px;max-width:860px}
+h3{font-size:16px;margin:34px 0 14px;letter-spacing:.01em;font-weight:600}
+h3:first-child{margin-top:0}
+
+/* ---------- blocks ---------- */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.card h4{margin:0 0 8px;font-size:14.5px;font-weight:600}
+.card p{margin:0;color:var(--txt2);font-size:13.5px}
+.card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:9px}
+.card.v .tag{color:var(--violet)} .card.a .tag{color:var(--amber)} .card.r .tag{color:var(--red)}
+.card ul{margin:10px 0 0;padding-left:17px;color:var(--txt2);font-size:13.5px}
+.card li{margin:4px 0}
+
+.quote{border-left:3px solid var(--violet);background:linear-gradient(90deg,rgba(139,92,246,.09),transparent);padding:16px 22px;border-radius:0 10px 10px 0;margin:0 0 26px;color:var(--txt);font-size:15.5px}
+.note{display:flex;gap:11px;align-items:flex-start;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.28);border-radius:10px;padding:13px 16px;margin-top:20px;font-size:13.5px;color:#F1DFAF}
+.note b{color:var(--amber)}
+.note.red{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.28);color:#F3C9C9}
+.note.red b{color:var(--red)}
+.note.teal{background:rgba(45,212,191,.07);border-color:rgba(45,212,191,.28);color:#BFEDE6}
+.note.teal b{color:var(--teal)}
+
+/* ---------- tables ---------- */
+.tbox{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:620px}
+th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);
+   padding:12px 16px;border-bottom:1px solid var(--line2);background:var(--bg2);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--txt2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td strong{color:var(--txt);font-weight:600}
+td code,.mono{font-family:var(--mono);font-size:12.5px;color:var(--teal)}
+
+/* ---------- steps ---------- */
+.steps{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 16px;position:relative}
+.step .n{font-family:var(--mono);font-size:11px;width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  background:rgba(45,212,191,.12);color:var(--teal);border:1px solid rgba(45,212,191,.3);margin-bottom:10px}
+.step b{display:block;font-size:13.5px;margin-bottom:5px;color:var(--txt)}
+.step span{font-size:12.5px;color:var(--txt2)}
+
+.chain{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0}
+.chain .c{font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:8px;background:var(--panel2);border:1px solid var(--line2);color:var(--txt2)}
+.chain .c.ok{color:var(--green);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.08)}
+.chain .c.bad{color:var(--red);border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.08)}
+.chain .arw{color:var(--txt3);font-family:var(--mono);font-size:12px}
+
+/* ---------- code ---------- */
+pre{background:#0D0F1C;border:1px solid var(--line2);border-radius:11px;padding:16px 18px;overflow-x:auto;margin:0;
+    font-family:var(--mono);font-size:12.5px;line-height:1.65;color:#C8CEE6}
+pre .k{color:var(--violet)} pre .s{color:var(--teal)} pre .c{color:var(--txt3)} pre .n{color:var(--amber)}
+.codehdr{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt3);margin:0 0 9px}
+
+/* ---------- svg figure ---------- */
+figure{margin:0 0 8px}
+.figbox{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel),var(--bg2));padding:18px;overflow-x:auto}
+.figbox svg{display:block;min-width:720px;width:100%;height:auto}
+figcaption{font-size:12.5px;color:var(--txt3);margin-top:10px;font-style:italic}
+
+/* ---------- severity / bands ---------- */
+.bands{display:grid;gap:8px}
+.band{display:grid;grid-template-columns:118px 1fr;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.band b{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+.band span{font-size:13px;color:var(--txt2)}
+.b-crit b{color:#FF6B6B} .b-high b{color:#FB923C} .b-med b{color:var(--amber)}
+.b-low b{color:var(--blue)} .b-info b{color:var(--txt3)}
+.b-ok b{color:var(--green)} .b-t b{color:var(--teal)} .b-v b{color:var(--violet)}
+
+/* ---------- mock UI ---------- */
+.mock{border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:var(--bg2)}
+.mock-bar{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:#0D0F1C;border-bottom:1px solid var(--line2);font-size:12.5px}
+.mock-bar .t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt2)}
+.mock-bar .b{font-family:var(--mono);font-size:10px;color:var(--txt3);border:1px dashed var(--line2);padding:3px 8px;border-radius:5px}
+.kpis{display:flex;gap:10px;padding:14px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.kpi{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 14px}
+.kpi .v{font-size:24px;font-weight:650;letter-spacing:-.02em}
+.kpi .l{font-size:11.5px;color:var(--txt3)}
+.kpi.hi .v{color:var(--red)} .kpi.rm .v{color:var(--amber)}
+.filters{display:flex;gap:7px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.filters span{font-size:11.5px;font-family:var(--mono);padding:5px 10px;border-radius:7px;background:var(--panel2);border:1px solid var(--line2);color:var(--txt3)}
+.mock table{min-width:620px}
+.sev{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:5px;white-space:nowrap}
+.sev.h{background:rgba(248,113,113,.14);color:#FF8A8A;border:1px solid rgba(248,113,113,.3)}
+.sev.m{background:rgba(251,191,36,.13);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+.st{font-family:var(--mono);font-size:11px;color:var(--txt2)}
+.sm{display:block;font-size:11.5px;color:var(--txt3);font-family:var(--mono);margin-top:3px}
+
+/* ---------- api ---------- */
+.api{display:grid;gap:6px}
+.ep{display:grid;grid-template-columns:62px 1fr;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 13px;font-family:var(--mono);font-size:12.5px}
+.ep i{font-style:normal;font-size:10.5px;letter-spacing:.06em;text-align:center;padding:3px 0;border-radius:5px;font-weight:600}
+.ep i.get{background:rgba(96,165,250,.14);color:var(--blue)}
+.ep i.post{background:rgba(74,222,128,.14);color:var(--green)}
+.ep i.patch{background:rgba(251,191,36,.14);color:var(--amber)}
+.ep span{color:var(--txt2);overflow-x:auto}
+
+/* ---------- phases ---------- */
+.phase{display:grid;grid-template-columns:118px 1fr;gap:16px;padding:15px 0;border-bottom:1px solid var(--line)}
+.phase:last-child{border-bottom:none}
+.phase .ph{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--violet);padding-top:2px}
+.phase b{display:block;font-size:14.5px;margin-bottom:4px}
+.phase p{margin:0 0 7px;color:var(--txt2);font-size:13.5px}
+.exit{font-family:var(--mono);font-size:11.5px;color:var(--teal)}
+.exit::before{content:"EXIT · ";color:var(--txt3)}
+
+.tiers{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.tier{border-radius:12px;padding:18px 20px;border:1px solid var(--line);background:var(--panel)}
+.tier.p0{border-color:rgba(45,212,191,.4);background:linear-gradient(180deg,rgba(45,212,191,.07),var(--panel))}
+.tier.p1{border-color:rgba(139,92,246,.35)}
+.tier .lv{font-family:var(--mono);font-size:11px;letter-spacing:.14em;margin-bottom:4px}
+.tier.p0 .lv{color:var(--teal)} .tier.p1 .lv{color:var(--violet)} .tier.p2 .lv{color:var(--txt3)}
+.tier b{display:block;margin-bottom:10px;font-size:14.5px}
+.tier ul{margin:0;padding-left:17px;color:var(--txt2);font-size:13.5px}
+.tier li{margin:5px 0}
+
+.timeline{display:grid;gap:9px}
+.tl{display:grid;grid-template-columns:96px 1fr;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px}
+.tl .t{font-family:var(--mono);font-size:12px;color:var(--teal)}
+.tl b{display:block;font-size:13.5px;margin-bottom:3px}
+.tl span{font-size:13px;color:var(--txt2)}
+
+.checks{display:grid;gap:8px;counter-reset:ck}
+.check{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 15px;font-size:13.5px;color:var(--txt2)}
+.check::before{counter-increment:ck;content:counter(ck,decimal-leading-zero);font-family:var(--mono);font-size:11px;color:var(--teal);padding-top:2px;flex:0 0 auto}
+
+footer{padding:38px 0 60px;color:var(--txt3);font-size:12.5px}
+footer .fin{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+footer .fin span{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:7px;background:var(--panel);border:1px solid var(--line);color:var(--txt2)}
+@media(max-width:620px){
+  .band,.phase,.tl,.ep{grid-template-columns:1fr;gap:6px}
+  section{padding:40px 0}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Anavykai · AgentShield Graph</p>
+    <h1>Secure the AI agents your business depends on</h1>
+    <p class="lede">A graph-first security investigator for AI coding agents, GitHub repositories and CI/CD workflows — built on FalkorDB. Product specification · Engineering blueprint · Hackathon MVP.</p>
+    <div class="pills">
+      <span class="pill hot">Track · Agents That Act on Connected Data</span>
+      <span class="pill">FalkorDB is core</span>
+      <span class="pill">GitHub + CI/CD first</span>
+      <span class="pill">Evidence before closure</span>
+    </div>
+  </div>
+</header>
+
+<nav><div class="wrap">
+  <a href="#thesis">Thesis</a>
+  <a href="#users">Users</a>
+  <a href="#workflow">Workflow</a>
+  <a href="#arch">Architecture</a>
+  <a href="#graph">Graph Model</a>
+  <a href="#data">Data Layer</a>
+  <a href="#ui">Findings UI</a>
+  <a href="#api">API</a>
+  <a href="#risk">Risk &amp; Confidence</a>
+  <a href="#evidence">Evidence</a>
+  <a href="#remediation">Remediation</a>
+  <a href="#github">GitHub / CI</a>
+  <a href="#security">Self-Security</a>
+  <a href="#tests">Test Plan</a>
+  <a href="#plan">Plan</a>
+  <a href="#demo">Demo</a>
+  <a href="#scope">Scope</a>
+</div></nav>
+
+<!-- ============ 01 THESIS ============ -->
+<section id="thesis"><div class="wrap">
+  <p class="sec-num">01 · Product thesis</p>
+  <h2>Investigate relationships, not isolated alerts</h2>
+  <div class="quote">Do not build another dashboard that lists isolated vulnerabilities. Build a <strong>security investigator</strong> that follows graph relationships to explain which combinations of permissions, tools, repositories and resources create a plausible attack path — and which <strong>validated change</strong> breaks that path.</div>
+
+  <div class="grid g4">
+    <div class="card"><span class="tag">Problem</span><h4>Risk is connected</h4><p>Individual alerts miss how tool permissions, repo access, dependencies, secrets exposure and workflow privileges combine into a larger risk.</p></div>
+    <div class="card v"><span class="tag">Solution</span><h4>Investigate relationships</h4><p>FalkorDB stores and traverses the security model; an agent uses controlled graph-query tools and produces explainable attack-path findings.</p></div>
+    <div class="card a"><span class="tag">Business outcome</span><h4>Prioritize useful fixes</h4><p>Show which verified policy or config change removes the most validated risk without breaking legitimate developer workflows.</p></div>
+    <div class="card r"><span class="tag">MVP boundary</span><h4>GitHub and CI/CD first</h4><p>Repo metadata, workflow permissions, scan findings and a controlled AI-agent test harness. Live enforcement only for supported integrations.</p></div>
+  </div>
+
+  <div class="note red"><b>Scope rule</b><div>A graph path is a <b>candidate relationship, not proof of exploitability</b>. Always distinguish observed events, static findings, simulated tests, external intelligence and AI-generated hypotheses.</div></div>
+</div></section>
+
+<!-- ============ 02 USERS ============ -->
+<section id="users"><div class="wrap">
+  <p class="sec-num">02 · Target users &amp; use cases</p>
+  <h2>Security buys, platform operates, developers use</h2>
+
+  <div class="grid g3">
+    <div class="card"><span class="tag">Primary buyer</span><h4>Security / AppSec lead</h4>
+      <ul><li>Wants a view of agent-related risk across repositories</li><li>Needs evidence, ownership, audit history and risk prioritization</li><li>Approves exceptions and high-impact remediation</li></ul></div>
+    <div class="card v"><span class="tag">Daily operator</span><h4>Platform / DevSecOps engineer</h4>
+      <ul><li>Connects GitHub and CI workflows</li><li>Reviews graph paths and policy gaps</li><li>Implements fixes and verifies pipeline behavior</li></ul></div>
+    <div class="card a"><span class="tag">Affected user</span><h4>Developer / AI-agent owner</h4>
+      <ul><li>Sees findings for their repository or agent</li><li>Reviews proposed changes and PRs</li><li>Needs fixes that preserve legitimate coding tasks</li></ul></div>
+  </div>
+
+  <h3>Six jobs AgentShield must do well</h3>
+  <div class="steps">
+    <div class="step"><div class="n">01</div><b>Repository onboarding</b><span>Connect a GitHub repo; inspect workflow permissions, dependency and secret-scan findings, declared agent integrations.</span></div>
+    <div class="step"><div class="n">02</div><b>Attack-path investigation</b><span>Trace risk from an AI coding agent through a tool or workflow permission to a sensitive asset or external action.</span></div>
+    <div class="step"><div class="n">03</div><b>Risk prioritization</b><span>Rank findings by validated impact and graph context rather than severity labels alone.</span></div>
+    <div class="step"><div class="n">04</div><b>Remediation planning</b><span>Propose a scoped permission change, dependency upgrade, workflow hardening or policy control.</span></div>
+    <div class="step"><div class="n">05</div><b>Verification</b><span>Rerun checks: the risky path is blocked and approved development behavior still works.</span></div>
+    <div class="step"><div class="n">06</div><b>Audit and reporting</b><span>Traceable evidence, ownership, status, approvals and exportable reports for security leads.</span></div>
+  </div>
+</div></section>
+
+<!-- ============ 03 WORKFLOW ============ -->
+<section id="workflow"><div class="wrap">
+  <p class="sec-num">03 · End-to-end workflow</p>
+  <h2>From workspace to verified fix in seven steps</h2>
+
+  <figure><div class="figbox">
+    <svg viewBox="0 0 1080 300" role="img" aria-label="Seven step end to end workflow diagram">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#4A5170"/></marker>
+        <linearGradient id="gw" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2DD4BF"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+      </defs>
+      <rect x="40" y="120" width="1000" height="3" fill="url(#gw)" opacity=".35" rx="2"/>
+      <g font-family="ui-monospace,Menlo,monospace">
+      <!-- nodes -->
+      <g>
+        <circle cx="75" cy="121" r="18" fill="#151828" stroke="#2DD4BF" stroke-width="2"/><text x="75" y="126" fill="#2DD4BF" font-size="13" text-anchor="middle">1</text>
+        <text x="75" y="172" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Create workspace</text>
+        <text x="75" y="192" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">Project, roles,</text>
+        <text x="75" y="206" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">tenant boundaries</text>
+      </g>
+      <g>
+        <circle cx="236" cy="121" r="18" fill="#151828" stroke="#2DD4BF" stroke-width="2"/><text x="236" y="126" fill="#2DD4BF" font-size="13" text-anchor="middle">2</text>
+        <text x="236" y="98" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Connect GitHub</text>
+        <text x="236" y="78" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">GitHub App, explicit repos</text>
+        <text x="236" y="64" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">no pasted PATs</text>
+      </g>
+      <g>
+        <circle cx="397" cy="121" r="18" fill="#151828" stroke="#2DD4BF" stroke-width="2"/><text x="397" y="126" fill="#2DD4BF" font-size="13" text-anchor="middle">3</text>
+        <text x="397" y="172" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Ingest &amp; normalize</text>
+        <text x="397" y="192" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">Agents, tools, perms, deps,</text>
+        <text x="397" y="206" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">assets → graph</text>
+      </g>
+      <g>
+        <circle cx="558" cy="121" r="18" fill="#151828" stroke="#8B5CF6" stroke-width="2"/><text x="558" y="126" fill="#8B5CF6" font-size="13" text-anchor="middle">4</text>
+        <text x="558" y="98" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Investigate</text>
+        <text x="558" y="78" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">Approved graph tools;</text>
+        <text x="558" y="64" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">conclusions link to evidence</text>
+      </g>
+      <g>
+        <circle cx="719" cy="121" r="18" fill="#151828" stroke="#8B5CF6" stroke-width="2"/><text x="719" y="126" fill="#8B5CF6" font-size="13" text-anchor="middle">5</text>
+        <text x="719" y="172" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Review path &amp; fix</text>
+        <text x="719" y="192" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">High-impact actions</text>
+        <text x="719" y="206" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">need authorization</text>
+      </g>
+      <g>
+        <circle cx="880" cy="121" r="18" fill="#151828" stroke="#4ADE80" stroke-width="2"/><text x="880" y="126" fill="#4ADE80" font-size="13" text-anchor="middle">6</text>
+        <text x="880" y="98" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Verify</text>
+        <text x="880" y="78" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">Static + graph re-eval +</text>
+        <text x="880" y="64" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">security tests must pass</text>
+      </g>
+      <g>
+        <circle cx="1020" cy="121" r="18" fill="#151828" stroke="#FBBF24" stroke-width="2"/><text x="1020" y="126" fill="#FBBF24" font-size="13" text-anchor="middle">7</text>
+        <text x="1020" y="172" fill="#E8EAF2" font-size="12.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="600">Monitor drift</text>
+        <text x="1020" y="192" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">Reopen if risk</text>
+        <text x="1020" y="206" fill="#A7ADC4" font-size="10.5" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif">recurs</text>
+      </g>
+      </g>
+      <!-- feedback loop -->
+      <path d="M1020 145 C1020 250 400 265 100 245 L82 240" fill="none" stroke="#4A5170" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+      <text x="520" y="278" fill="#737A96" font-size="11" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">on change → re-ingest affected graph region</text>
+    </svg>
+  </div>
+  <figcaption>Workflow loop: ingestion is continuous, and drift re-enters the pipeline at step 3.</figcaption></figure>
+
+  <div class="note teal"><b>First-session success condition</b><div>A business user connects a sample repository, sees a graph-backed finding with a traceable path, reviews a proposed fix, and watches a repeatable verification test pass.</div></div>
+</div></section>
+
+<!-- ============ 04 ARCHITECTURE ============ -->
+<section id="arch"><div class="wrap">
+  <p class="sec-num">04 · System architecture</p>
+  <h2>A modular pipeline with FalkorDB at the core</h2>
+  <p class="sub">Data-flow view. Every module has one job and one hard boundary; the LLM sits inside the pipeline but is never the policy-enforcement authority.</p>
+
+  <figure><div class="figbox">
+    <svg viewBox="0 0 1080 540" role="img" aria-label="AgentShield system architecture data flow diagram">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#5A6185"/></marker>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#2DD4BF"/></marker>
+        <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#8B5CF6"/></marker>
+      </defs>
+      <style>
+        .bx{fill:#151828;stroke:#343A57;stroke-width:1.5;rx:11}
+        .bt{fill:#E8EAF2;font-size:13px;font-weight:600;font-family:-apple-system,Segoe UI,sans-serif;text-anchor:middle}
+        .bs{fill:#A7ADC4;font-size:10.5px;font-family:ui-monospace,Menlo,monospace;text-anchor:middle}
+        .el{fill:#737A96;font-size:10px;font-family:ui-monospace,Menlo,monospace;text-anchor:middle}
+        .lane{fill:#737A96;font-size:10px;letter-spacing:.16em;font-family:ui-monospace,Menlo,monospace}
+      </style>
+
+      <!-- lane labels -->
+      <text class="lane" x="20" y="92">INGEST →</text>
+      <text class="lane" x="20" y="302">← ACT</text>
+
+      <!-- ROW 1 -->
+      <rect class="bx" x="20" y="110" width="178" height="74" rx="11"/>
+      <text class="bt" x="109" y="138">External sources</text>
+      <text class="bs" x="109" y="156">GitHub App · Webhooks</text>
+      <text class="bs" x="109" y="170">CI scanner output</text>
+
+      <rect class="bx" x="242" y="110" width="178" height="74" rx="11"/>
+      <text class="bt" x="331" y="142">Ingestion +</text>
+      <text class="bt" x="331" y="160">Normalization API</text>
+
+      <rect x="464" y="98" width="190" height="98" rx="13" fill="#17213A" stroke="#2DD4BF" stroke-width="2"/>
+      <text class="bt" x="559" y="134" fill="#2DD4BF" font-size="15">FalkorDB Graph</text>
+      <text class="bs" x="559" y="155">16 labels · 20 relationships</text>
+      <text class="bs" x="559" y="171">Cypher · bounded traversal</text>
+
+      <rect class="bx" x="698" y="110" width="166" height="74" rx="11"/>
+      <text class="bt" x="781" y="142">Controlled Graph</text>
+      <text class="bt" x="781" y="160">Query Tools</text>
+
+      <rect x="908" y="110" width="152" height="74" rx="11" fill="#1C1733" stroke="#8B5CF6" stroke-width="1.8"/>
+      <text class="bt" x="984" y="142" fill="#C4B5FD">Investigation</text>
+      <text class="bt" x="984" y="160" fill="#C4B5FD">Agent (LLM)</text>
+
+      <!-- ROW 2 -->
+      <rect class="bx" x="908" y="300" width="152" height="74" rx="11"/>
+      <text class="bt" x="984" y="332">Evidence / Risk</text>
+      <text class="bt" x="984" y="350">Validation</text>
+
+      <rect class="bx" x="698" y="300" width="166" height="74" rx="11"/>
+      <text class="bt" x="781" y="332">Remediation</text>
+      <text class="bt" x="781" y="350">Planner</text>
+
+      <rect class="bx" x="464" y="300" width="190" height="74" rx="11"/>
+      <text class="bt" x="559" y="326">Approval + GitHub PR</text>
+      <text class="bt" x="559" y="344">/ CI Verification</text>
+      <text class="bs" x="559" y="362">human gate · no auto-merge</text>
+
+      <rect class="bx" x="242" y="300" width="178" height="74" rx="11"/>
+      <text class="bt" x="331" y="332">React / Vite</text>
+      <text class="bt" x="331" y="350">Dashboard</text>
+
+      <rect class="bx" x="20" y="300" width="178" height="74" rx="11"/>
+      <text class="bt" x="109" y="326">PostgreSQL</text>
+      <text class="bs" x="109" y="345">tenants · users · jobs</text>
+      <text class="bs" x="109" y="359">approvals · audit</text>
+
+      <!-- arrows row1 -->
+      <path d="M198 147 H236" stroke="#5A6185" stroke-width="1.6" marker-end="url(#a2)"/>
+      <path d="M420 147 H458" stroke="#2DD4BF" stroke-width="1.8" marker-end="url(#a3)"/>
+      <text class="el" x="439" y="136">upsert</text>
+      <path d="M654 140 H692" stroke="#2DD4BF" stroke-width="1.8" marker-end="url(#a3)"/>
+      <path d="M692 160 H660" stroke="#2DD4BF" stroke-width="1.4" marker-end="url(#a3)" opacity=".6"/>
+      <text class="el" x="676" y="186">cypher</text>
+      <path d="M864 147 H902" stroke="#8B5CF6" stroke-width="1.8" marker-end="url(#a4)"/>
+      <text class="el" x="884" y="136">tools</text>
+
+      <!-- vertical + row2 arrows -->
+      <path d="M984 184 V294" stroke="#8B5CF6" stroke-width="1.8" marker-end="url(#a4)"/>
+      <text class="el" x="1024" y="243">claims</text>
+      <path d="M902 337 H870" stroke="#5A6185" stroke-width="1.6" marker-end="url(#a2)"/>
+      <path d="M692 337 H660" stroke="#5A6185" stroke-width="1.6" marker-end="url(#a2)"/>
+      <path d="M458 337 H426" stroke="#5A6185" stroke-width="1.6" marker-end="url(#a2)"/>
+      <path d="M236 337 H204" stroke="#5A6185" stroke-width="1.6" marker-end="url(#a2)"/>
+      <text class="el" x="560" y="392">verified result</text>
+
+      <!-- verification back to graph -->
+      <path d="M559 300 V210 L559 202" stroke="#4ADE80" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a2)"/>
+      <text class="el" x="612" y="258" fill="#4ADE80">recompute paths</text>
+
+      <!-- PR back to GitHub -->
+      <path d="M520 300 C440 250 220 250 109 200 L109 190" stroke="#FBBF24" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a2)" fill="none"/>
+      <text class="el" x="300" y="248" fill="#FBBF24">approved PR → GitHub</text>
+
+      <!-- postgres links -->
+      <path d="M109 300 V190" stroke="#5A6185" stroke-width="1.2" stroke-dasharray="3 4" opacity=".45"/>
+      <path d="M331 300 V190" stroke="#5A6185" stroke-width="1.2" stroke-dasharray="3 4" opacity=".45"/>
+
+      <!-- boundary note -->
+      <rect x="880" y="420" width="190" height="72" rx="10" fill="none" stroke="#8B5CF6" stroke-dasharray="4 4" opacity=".6"/>
+      <text class="bs" x="975" y="446" fill="#C4B5FD">LLM boundary</text>
+      <text class="bs" x="975" y="464" fill="#737A96">allowlisted tools only</text>
+      <text class="bs" x="975" y="479" fill="#737A96">never sets final severity</text>
+
+      <text class="bs" x="340" y="452" fill="#737A96" text-anchor="start">Repo files, PR text and external content enter as UNTRUSTED DATA —</text>
+      <text class="bs" x="340" y="468" fill="#737A96" text-anchor="start">they are never treated as instructions or policy.</text>
+      <text class="bs" x="340" y="490" fill="#737A96" text-anchor="start">Raw artifacts live in controlled storage; graph nodes keep references + hashes.</text>
+    </svg>
+  </div>
+  <figcaption>Level-1 data-flow diagram. Solid = primary flow, dashed = feedback and control relationships.</figcaption></figure>
+
+  <h3>Recommended stack</h3>
+  <div class="chain">
+    <span class="c">React + Vite</span><span class="arw">·</span>
+    <span class="c">Python + FastAPI</span><span class="arw">·</span>
+    <span class="c ok">FalkorDB · Cypher</span><span class="arw">·</span>
+    <span class="c">PostgreSQL</span><span class="arw">·</span>
+    <span class="c">Background worker queue</span><span class="arw">·</span>
+    <span class="c">LLM with structured tool calls</span>
+  </div>
+
+  <h3>Backend modules &amp; boundaries</h3>
+  <div class="tbox"><table>
+    <thead><tr><th>Module</th><th>Responsibility</th><th>Key boundary</th></tr></thead>
+    <tbody>
+      <tr><td><strong>GitHub Connector</strong></td><td>Installation lifecycle, repo metadata, webhook validation, PR creation</td><td>Minimum App permissions; validate signatures and replay</td></tr>
+      <tr><td><strong>Ingestion Service</strong></td><td>Normalize data, upsert graph entities and relations, record provenance</td><td>Schema validation, idempotency, tenant mapping</td></tr>
+      <tr><td><strong>Graph Query Service</strong></td><td>Run approved Cypher templates and traversal algorithms</td><td>Parameterized values; bounded depth, results, timeouts</td></tr>
+      <tr><td><strong>Investigation Agent</strong></td><td>Choose graph tools, synthesize findings, request missing evidence</td><td>Tool allowlist, bounded iterations, untrusted-data handling</td></tr>
+      <tr><td><strong>Risk Engine</strong></td><td>Compute risk from deterministic factors and evidence quality</td><td>LLM cannot set final severity or confidence</td></tr>
+      <tr><td><strong>Remediation Service</strong></td><td>Patch proposals, approvals, PRs and verification jobs</td><td>Human approval for material changes; isolated execution</td></tr>
+      <tr><td><strong>Audit Service</strong></td><td>Record actor, target, action, policy version, outcome, time</td><td>Append-only; tenant-scoped reads</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><b>Architectural boundaries</b><div>Graph queries run through a small allowlisted tool layer · no unrestricted Cypher or shell from the LLM · repo files and external content are untrusted data · remediation generation is separate from approval and execution · raw artifacts in controlled storage, nodes keep references and hashes.</div></div>
+</div></section>
+
+<!-- ============ 05 GRAPH MODEL ============ -->
+<section id="graph"><div class="wrap">
+  <p class="sec-num">05 · FalkorDB graph model</p>
+  <h2>Sixteen labels and twenty typed relationships</h2>
+  <p class="sub">The red spine — <span class="mono">Agent → Tool → Permission → Resource</span> — is the traversal the investigation agent walks first.</p>
+
+  <figure><div class="figbox">
+    <svg viewBox="0 0 1080 440" role="img" aria-label="FalkorDB graph schema showing the core attack path traversal">
+      <defs>
+        <marker id="ag" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#5A6185"/></marker>
+        <marker id="ard" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#F87171"/></marker>
+      </defs>
+      <style>
+        .nd{fill:#151828;stroke:#343A57;stroke-width:1.5}
+        .nl{fill:#E8EAF2;font-size:12.5px;font-weight:600;font-family:-apple-system,Segoe UI,sans-serif;text-anchor:middle}
+        .rel{fill:#737A96;font-size:10px;font-family:ui-monospace,Menlo,monospace;text-anchor:middle}
+        .relr{fill:#F87171;font-size:10px;font-family:ui-monospace,Menlo,monospace;text-anchor:middle}
+      </style>
+
+      <!-- core red spine -->
+      <rect class="nd" x="40" y="176" width="134" height="52" rx="26" stroke="#F87171" stroke-width="2" fill="#2A1620"/>
+      <text class="nl" x="107" y="207" fill="#FCA5A5">Agent</text>
+      <rect class="nd" x="268" y="176" width="134" height="52" rx="26" stroke="#F87171" stroke-width="2" fill="#2A1620"/>
+      <text class="nl" x="335" y="207" fill="#FCA5A5">Tool</text>
+      <rect class="nd" x="496" y="176" width="134" height="52" rx="26" stroke="#F87171" stroke-width="2" fill="#2A1620"/>
+      <text class="nl" x="563" y="207" fill="#FCA5A5">Permission</text>
+      <rect class="nd" x="724" y="176" width="150" height="52" rx="26" stroke="#F87171" stroke-width="2" fill="#2A1620"/>
+      <text class="nl" x="799" y="200" fill="#FCA5A5">Resource</text>
+      <text class="rel" x="799" y="216" fill="#F87171">sensitivity: restricted</text>
+
+      <path d="M174 202 H262" stroke="#F87171" stroke-width="2" marker-end="url(#ard)"/>
+      <text class="relr" x="218" y="192">CAN_INVOKE</text>
+      <path d="M402 202 H490" stroke="#F87171" stroke-width="2" marker-end="url(#ard)"/>
+      <text class="relr" x="446" y="192">HAS_PERMISSION</text>
+      <path d="M630 202 H718" stroke="#F87171" stroke-width="2" marker-end="url(#ard)"/>
+      <text class="relr" x="674" y="192">CAN_ACCESS</text>
+
+      <!-- MCP server above -->
+      <rect class="nd" x="268" y="60" width="134" height="48" rx="24"/>
+      <text class="nl" x="335" y="89">MCPServer</text>
+      <path d="M128 176 C135 120 200 90 262 86" stroke="#5A6185" stroke-width="1.5" fill="none" marker-end="url(#ag)"/>
+      <text class="rel" x="186" y="112">CONNECTS_TO</text>
+
+      <!-- repository chain below -->
+      <rect class="nd" x="40" y="316" width="134" height="48" rx="12"/>
+      <text class="nl" x="107" y="345">Repository</text>
+      <rect class="nd" x="268" y="316" width="134" height="48" rx="12"/>
+      <text class="nl" x="335" y="345">Workflow</text>
+      <rect class="nd" x="496" y="316" width="134" height="48" rx="12"/>
+      <text class="nl" x="563" y="340">SecretRef</text>
+      <text class="rel" x="563" y="355">+ DependencyOrAction</text>
+
+      <path d="M174 340 H262" stroke="#5A6185" stroke-width="1.5" marker-end="url(#ag)"/>
+      <text class="rel" x="218" y="331">HAS_WORKFLOW</text>
+      <path d="M402 340 H490" stroke="#5A6185" stroke-width="1.5" marker-end="url(#ag)"/>
+      <text class="rel" x="446" y="331">USES_SECRET</text>
+      <path d="M335 316 V234" stroke="#FBBF24" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#ag)"/>
+      <text class="rel" x="392" y="278" fill="#FBBF24">workflow perms</text>
+
+      <!-- package / vuln -->
+      <rect class="nd" x="40" y="396" width="134" height="40" rx="12"/>
+      <text class="nl" x="107" y="421" font-size="11.5">Package</text>
+      <rect class="nd" x="268" y="396" width="134" height="40" rx="12"/>
+      <text class="nl" x="335" y="421" font-size="11.5">Vulnerability</text>
+      <path d="M174 416 H262" stroke="#5A6185" stroke-width="1.5" marker-end="url(#ag)"/>
+      <text class="rel" x="218" y="408">AFFECTED_BY</text>
+      <path d="M90 396 V370" stroke="#5A6185" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+      <!-- finding / path / remediation column -->
+      <rect class="nd" x="724" y="316" width="150" height="48" rx="12" stroke="#8B5CF6"/>
+      <text class="nl" x="799" y="345" fill="#C4B5FD">Finding</text>
+      <rect class="nd" x="930" y="316" width="130" height="48" rx="12" stroke="#8B5CF6"/>
+      <text class="nl" x="995" y="340" fill="#C4B5FD">AttackPath</text>
+      <text class="rel" x="995" y="355">+ Evidence</text>
+      <rect class="nd" x="930" y="176" width="130" height="52" rx="12" stroke="#4ADE80"/>
+      <text class="nl" x="995" y="199" fill="#86EFAC">Remediation</text>
+      <text class="rel" x="995" y="215">+ VerificationRun</text>
+
+      <path d="M630 340 H718" stroke="#5A6185" stroke-width="1.5" marker-end="url(#ag)"/>
+      <text class="rel" x="674" y="331">HAS_FINDING</text>
+      <path d="M874 340 H924" stroke="#8B5CF6" stroke-width="1.5" marker-end="url(#ag)"/>
+      <text class="rel" x="899" y="376" fill="#8B5CF6">HAS_CANDIDATE_PATH</text>
+      <path d="M995 316 V234" stroke="#4ADE80" stroke-width="1.5" marker-end="url(#ag)"/>
+      <text class="rel" x="1030" y="278" fill="#4ADE80">REMEDIATED_BY</text>
+      <path d="M799 316 V234" stroke="#5A6185" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ag)"/>
+      <text class="rel" x="760" y="278">AFFECTS</text>
+
+      <text class="rel" x="40" y="26" text-anchor="start" fill="#F87171">■ core traversal walked first</text>
+      <text class="rel" x="250" y="26" text-anchor="start" fill="#8B5CF6">■ finding &amp; path layer</text>
+      <text class="rel" x="440" y="26" text-anchor="start" fill="#4ADE80">■ remediation &amp; proof</text>
+    </svg>
+  </div>
+  <figcaption>Schema overview. Organization → Project → Repository provides the tenant and scope hierarchy above this view.</figcaption></figure>
+
+  <h3>Node labels</h3>
+  <div class="tbox"><table>
+    <thead><tr><th>Label</th><th>Purpose</th><th>Label</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Organization</strong></td><td>Business / tenant boundary</td><td><strong>Resource</strong></td><td>Repo, file class, artifact, API or data</td></tr>
+      <tr><td><strong>Project</strong></td><td>Logical security scope</td><td><strong>Package</strong></td><td>Dependency identity and version</td></tr>
+      <tr><td><strong>Repository</strong></td><td>GitHub repo and sync state</td><td><strong>Vulnerability</strong></td><td>Advisory metadata and version ranges</td></tr>
+      <tr><td><strong>Workflow</strong></td><td>CI/CD workflow and granted capabilities</td><td><strong>Finding</strong></td><td>Canonical security issue</td></tr>
+      <tr><td><strong>Agent</strong></td><td>AI coding agent or declared integration</td><td><strong>Evidence</strong></td><td>Claim-level provenance</td></tr>
+      <tr><td><strong>MCPServer</strong></td><td>Tool-server metadata; never auth secrets</td><td><strong>AttackPath</strong></td><td>Candidate or validated ordered path</td></tr>
+      <tr><td><strong>Tool</strong></td><td>Tool an agent can invoke</td><td><strong>Remediation</strong></td><td>Proposed or applied change</td></tr>
+      <tr><td><strong>Permission</strong></td><td>Declared or verified access capability</td><td><strong>VerificationRun</strong></td><td>Retest and regression evidence</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>Identity</b><div>Team / User nodes carry ownership and approvals only — sensitive identity details stay in the auth system.</div></div>
+
+  <h3>The twenty relationships</h3>
+  <div class="tbox"><table>
+    <thead><tr><th>From</th><th>Relationship</th><th>To</th><th>From</th><th>Relationship</th><th>To</th></tr></thead>
+    <tbody>
+      <tr><td>Organization</td><td><code>OWNS_PROJECT</code></td><td>Project</td><td>Workflow</td><td><code>USES_SECRET</code></td><td>SecretReference</td></tr>
+      <tr><td>Project</td><td><code>CONTAINS_REPOSITORY</code></td><td>Repository</td><td>Workflow</td><td><code>USES_ACTION</code></td><td>DependencyOrAction</td></tr>
+      <tr><td>Repository</td><td><code>HAS_WORKFLOW</code></td><td>Workflow</td><td>Package</td><td><code>AFFECTED_BY</code></td><td>Vulnerability</td></tr>
+      <tr><td>Repository</td><td><code>CONTAINS_PACKAGE</code></td><td>Package</td><td>Finding</td><td><code>SUPPORTED_BY</code></td><td>Evidence</td></tr>
+      <tr><td>Repository</td><td><code>HAS_FINDING</code></td><td>Finding</td><td>Finding</td><td><code>AFFECTS</code></td><td>Resource</td></tr>
+      <tr><td>Agent</td><td><code>CONNECTS_TO</code></td><td>MCPServer</td><td>Finding</td><td><code>HAS_CANDIDATE_PATH</code></td><td>AttackPath</td></tr>
+      <tr><td>Agent</td><td><code>CAN_INVOKE</code></td><td>Tool</td><td>AttackPath</td><td><code>CONTAINS_STEP</code></td><td>GraphEntity</td></tr>
+      <tr><td>Tool</td><td><code>HAS_PERMISSION</code></td><td>Permission</td><td>Finding</td><td><code>REMEDIATED_BY</code></td><td>Remediation</td></tr>
+      <tr><td>Permission</td><td><code>CAN_ACCESS</code></td><td>Resource</td><td>Remediation</td><td><code>VERIFIED_BY</code></td><td>VerificationRun</td></tr>
+      <tr><td>Team</td><td><code>OWNS</code></td><td>Repository</td><td>User</td><td><code>APPROVED</code></td><td>Remediation</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Relationship semantics &amp; safeguards</h3>
+  <div class="tbox"><table>
+    <thead><tr><th>Relationship</th><th>Meaning</th><th>Required safeguards</th></tr></thead>
+    <tbody>
+      <tr><td><code>CAN_INVOKE</code></td><td>Agent is configured or observed to call a tool</td><td>Record whether declared, observed or inferred</td></tr>
+      <tr><td><code>CAN_ACCESS</code></td><td>Permission permits access to a resource</td><td>Store source, scope and validation status; never claim reachability from a name alone</td></tr>
+      <tr><td><code>AFFECTED_BY</code></td><td>Package version matches an advisory's affected range</td><td>Deterministic version-range checks and advisory provenance</td></tr>
+      <tr><td><code>SUPPORTED_BY</code></td><td>Evidence supports a particular finding claim</td><td>Evidence must identify the specific claim and source</td></tr>
+      <tr><td><code>HAS_CANDIDATE_PATH</code></td><td>Finding is associated with a possible path</td><td>Label candidate / tested / validated / disproven — path existence is never exploit proof</td></tr>
+      <tr><td><code>REMEDIATED_BY</code></td><td>Change intended to address the finding or break a path</td><td>Track the exact proposal and verification run</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Graph query concept</h3>
+  <div class="grid g2">
+    <div>
+      <p class="codehdr">Core traversal · Cypher</p>
+      <pre><span class="k">MATCH</span> (a:<span class="s">Agent</span>)-[:<span class="n">CAN_INVOKE</span>]->(t:<span class="s">Tool</span>)
+  -[:<span class="n">HAS_PERMISSION</span>]->(p:<span class="s">Permission</span>)
+  -[:<span class="n">CAN_ACCESS</span>]->(r:<span class="s">Resource</span>)
+<span class="k">WHERE</span> a.id = $agent_id
+  <span class="k">AND</span> r.sensitivity <span class="k">IN</span> [<span class="s">'confidential'</span>,<span class="s">'restricted'</span>]
+<span class="k">RETURN</span> a.id <span class="k">AS</span> agent, t.name <span class="k">AS</span> tool,
+  p.scope <span class="k">AS</span> permission_scope,
+  r.id <span class="k">AS</span> resource, r.sensitivity <span class="k">AS</span> sensitivity
+<span class="k">LIMIT</span> <span class="n">100</span>
+
+<span class="c">-- add a tenant/project constraint in production</span></pre>
+    </div>
+    <div class="card"><span class="tag">Graph design rules</span>
+      <ul>
+        <li>Stable internal IDs with uniqueness constraints and indexes</li>
+        <li><code>tenant_id</code> and project scope on nodes; enforced in the query service, <em>not prompts</em></li>
+        <li>Explicit provenance: <code>assertion_source</code>, <code>observed_at</code>, <code>validation_status</code></li>
+        <li>Upserts and stable external IDs so replayed webhooks never duplicate</li>
+        <li>Bound depth, result count, query time and relationship types</li>
+        <li>No secrets, credentials or large source files in graph properties</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 06 DATA LAYER ============ -->
+<section id="data"><div class="wrap">
+  <p class="sec-num">06 · Core relational tables</p>
+  <h2>PostgreSQL for transactions, FalkorDB for truth</h2>
+
+  <div class="tbox"><table>
+    <thead><tr><th>Table</th><th>Role</th><th>Table</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>tenants</code></td><td>Organization boundary</td><td><code>observations</code></td><td>Many per finding</td></tr>
+      <tr><td><code>users</code></td><td>External IdP; minimal PII</td><td><code>evidence</code></td><td>Claim-level provenance</td></tr>
+      <tr><td><code>memberships</code></td><td>Tenant role assignment</td><td><code>remediations</code></td><td>Versioned proposal</td></tr>
+      <tr><td><code>projects</code></td><td>Settings and scope</td><td><code>verification_runs</code></td><td>Closure needs passing checks</td></tr>
+      <tr><td><code>integrations</code></td><td>Secret-manager ref, <strong>not the secret</strong></td><td><code>jobs</code></td><td>Async work, idempotency key</td></tr>
+      <tr><td><code>scan_runs</code></td><td>Immutable run metadata</td><td><code>approvals</code></td><td>Bound to proposal hash</td></tr>
+      <tr><td><code>findings</code></td><td>UI index; links <code>graph_node_id</code></td><td><code>audit_events</code></td><td>Append-only log</td></tr>
+      <tr><td colspan="2"></td><td><code>policy_versions</code></td><td>Immutable, rollback-ready</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><span class="tag">Data integrity rules</span>
+      <ul>
+        <li>UUIDs internally; unique tenant-scoped external IDs and idempotency keys</li>
+        <li>Fingerprint dedupes findings but is not permanent identity</li>
+        <li>Timestamps in UTC; preserve source timestamps</li>
+        <li>Transactions for status changes, approvals and audit writes</li>
+        <li>Large artifacts in access-controlled object storage</li>
+        <li>Retention keeps legally required audit records</li>
+      </ul>
+    </div>
+    <div class="note red" style="margin-top:0;align-self:start"><b>Anti-pattern</b><div>Don't duplicate the graph into tables and treat FalkorDB as a visualization layer. The graph is the security model; Postgres is the transactional index around it.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ 07 UI ============ -->
+<section id="ui"><div class="wrap">
+  <p class="sec-num">07 · Security findings UI</p>
+  <h2>The findings list is the team's triage queue</h2>
+
+  <div class="mock">
+    <div class="mock-bar"><span class="t">AgentShield / Security · Findings</span><span class="b">Sample UI only</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="v">12</div><div class="l">Open findings</div></div>
+      <div class="kpi hi"><div class="v">4</div><div class="l">High / critical</div></div>
+      <div class="kpi rm"><div class="v">3</div><div class="l">In remediation</div></div>
+    </div>
+    <div class="filters"><span>Severity: All</span><span>Status: Open</span><span>Repository: All</span><span>Method: All</span><span>Date range</span></div>
+    <table>
+      <thead><tr><th>Finding</th><th>Severity</th><th>Detection</th><th>Status</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Workflow grants excessive write permissions</strong><span class="sm">repo: payments-service</span></td><td><span class="sev h">High</span></td><td class="st">Static + graph</td><td class="st">open</td><td class="st">Platform team</td></tr>
+        <tr><td><strong>Agent tool can reach restricted resource</strong><span class="sm">agent: code-assistant</span></td><td><span class="sev h">High</span></td><td class="st">Graph path</td><td class="st">investigating</td><td class="st">AppSec</td></tr>
+        <tr><td><strong>Dependency has an applicable advisory</strong><span class="sm">repo: internal-api</span></td><td><span class="sev m">Medium</span></td><td class="st">SCA + graph</td><td class="st">in_remediation</td><td class="st">Team API</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Finding states</h3>
+  <div class="chain">
+    <span class="c">open</span><span class="arw">→</span>
+    <span class="c">investigating</span><span class="arw">→</span>
+    <span class="c">in_remediation</span><span class="arw">→</span>
+    <span class="c">pending_verification</span><span class="arw">→</span>
+    <span class="c ok">verified_fixed</span>
+    <span class="arw">|</span>
+    <span class="c">accepted_risk</span>
+    <span class="c">false_positive</span>
+    <span class="c bad">reopened</span>
+  </div>
+
+  <h3>Finding detail — six tabs from claim to proof</h3>
+  <div class="grid g3">
+    <div class="card"><span class="tag">Tab 01</span><h4>Overview</h4><p>Title, severity, status, affected repo/agent, first and last seen, owner, detection method and a concise impact statement.</p></div>
+    <div class="card r"><span class="tag">Tab 02</span><h4>Attack path</h4><p>Ordered graph path with node and relationship types, edge provenance, validation state and the exact condition that makes it relevant.</p></div>
+    <div class="card a"><span class="tag">Tab 03</span><h4>Evidence</h4><p>Config excerpt, scanner record, runtime event, CI log, advisory — with timestamp, hash, source URL, trust level and limitations.</p></div>
+    <div class="card v"><span class="tag">Tab 04</span><h4>Remediation</h4><p>Recommended action, path expected to break, diff or policy proposal, risk of change, approval need and verification plan.</p></div>
+    <div class="card"><span class="tag">Tab 05</span><h4>Verification</h4><p>Pre- and post-fix test outcomes, relevant CI run, regression checks, graph recomputation and final status.</p></div>
+    <div class="card"><span class="tag">Tab 06</span><h4>Activity &amp; audit</h4><p>Assignment, status changes, investigation runs, approvals, comments, remediation attempts and verification history.</p></div>
+  </div>
+
+  <div class="note red"><b>accepted_risk ≠ fixed</b><div>Requires an authorized approver, documented rationale, an expiry / review date and audit history.</div></div>
+</div></section>
+
+<!-- ============ 08 API ============ -->
+<section id="api"><div class="wrap">
+  <p class="sec-num">08 · API endpoint design</p>
+  <h2>REST under <span class="mono">/api/v1</span> — tenant-scoped and audited</h2>
+
+  <div class="grid g3">
+    <div>
+      <h3>Projects &amp; GitHub integration</h3>
+      <div class="api">
+        <div class="ep"><i class="post">POST</i><span>/projects</span></div>
+        <div class="ep"><i class="get">GET</i><span>/projects/{projectId}</span></div>
+        <div class="ep"><i class="post">POST</i><span>/integrations/github/installations</span></div>
+        <div class="ep"><i class="get">GET</i><span>/integrations</span></div>
+        <div class="ep"><i class="post">POST</i><span>/webhooks/github</span></div>
+        <div class="ep"><i class="post">POST</i><span>/projects/{id}/repositories/sync</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Scans, investigations &amp; findings</h3>
+      <div class="api">
+        <div class="ep"><i class="post">POST</i><span>/projects/{id}/scans</span></div>
+        <div class="ep"><i class="get">GET</i><span>/jobs/{jobId}</span></div>
+        <div class="ep"><i class="post">POST</i><span>/projects/{id}/investigations</span></div>
+        <div class="ep"><i class="get">GET</i><span>/investigations/{investigationId}</span></div>
+        <div class="ep"><i class="get">GET</i><span>/projects/{id}/findings</span></div>
+        <div class="ep"><i class="get">GET</i><span>/findings/{findingId}</span></div>
+        <div class="ep"><i class="patch">PATCH</i><span>/findings/{findingId}</span></div>
+        <div class="ep"><i class="get">GET</i><span>/findings/{id}/evidence</span></div>
+        <div class="ep"><i class="get">GET</i><span>/findings/{id}/attack-paths</span></div>
+        <div class="ep"><i class="post">POST</i><span>/findings/{id}/recompute-paths</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Remediation &amp; verification</h3>
+      <div class="api">
+        <div class="ep"><i class="post">POST</i><span>/findings/{id}/remediations</span></div>
+        <div class="ep"><i class="get">GET</i><span>/remediations/{remediationId}</span></div>
+        <div class="ep"><i class="post">POST</i><span>/remediations/{id}/approve</span></div>
+        <div class="ep"><i class="post">POST</i><span>/remediations/{id}/pull-requests</span></div>
+        <div class="ep"><i class="post">POST</i><span>/remediations/{id}/verify</span></div>
+        <div class="ep"><i class="get">GET</i><span>/verification-runs/{id}</span></div>
+        <div class="ep"><i class="get">GET</i><span>/audit-events</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>API behavior — long-running work returns a job, never a blocking call</h3>
+  <div class="grid g2">
+    <div>
+      <p class="codehdr">Request</p>
+      <pre><span class="c">POST /api/v1/projects/{projectId}/investigations</span>
+{
+  <span class="s">"scope"</span>: {
+    <span class="s">"repository_ids"</span>: [<span class="s">"repo-uuid"</span>],
+    <span class="s">"agent_ids"</span>: [<span class="s">"agent-uuid"</span>]
+  },
+  <span class="s">"goal"</span>: <span class="s">"Find validated paths from agent tools
+           or workflow permissions to restricted
+           resources"</span>,
+  <span class="s">"max_hops"</span>: <span class="n">5</span>,
+  <span class="s">"max_paths"</span>: <span class="n">20</span>,
+  <span class="s">"include_external_intelligence"</span>: <span class="k">false</span>
+}</pre>
+    </div>
+    <div>
+      <p class="codehdr">Response</p>
+      <pre><span class="c">HTTP/1.1 202 Accepted</span>
+{
+  <span class="s">"investigation_id"</span>: <span class="s">"investigation-uuid"</span>,
+  <span class="s">"job_id"</span>: <span class="s">"job-uuid"</span>,
+  <span class="s">"status"</span>: <span class="s">"queued"</span>,
+  <span class="s">"status_url"</span>: <span class="s">"/api/v1/jobs/job-uuid"</span>
+}</pre>
+      <div class="card" style="margin-top:14px"><span class="tag">Contract rules</span>
+        <ul>
+          <li><code>202 Accepted</code> with job id, status and status URL for queued jobs</li>
+          <li>Idempotency keys for webhooks, remediations, PRs and verification</li>
+          <li>Cursor pagination with bounded page size and sort fields</li>
+          <li>Stable error codes — no secrets, stack traces or cross-tenant hints</li>
+          <li>Cancellation never assumes an executed external action rolled back</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 09 RISK ============ -->
+<section id="risk"><div class="wrap">
+  <p class="sec-num">09 · Severity, risk score &amp; confidence</p>
+  <h2>Severity estimates impact; confidence measures support</h2>
+
+  <h3>Severity levels</h3>
+  <div class="bands">
+    <div class="band b-crit"><b>Critical</b><span>Verified high-impact compromise or validated path to highly sensitive production assets</span></div>
+    <div class="band b-high"><b>High</b><span>Credible path to unauthorized access, privilege abuse or sensitive-data disclosure</span></div>
+    <div class="band b-med"><b>Medium</b><span>Material impact but needs additional preconditions or has limited reach</span></div>
+    <div class="band b-low"><b>Low</b><span>Limited-impact weakness or defense-in-depth improvement</span></div>
+    <div class="band b-info"><b>Informational</b><span>Observation or hardening advice without demonstrated impact</span></div>
+  </div>
+
+  <div class="note teal" style="font-family:var(--mono)"><b>risk_score</b><div>risk_score = 100 × Σ (weight × factor) — each factor normalized 0–1 with documented criteria and calibrated on a labeled test set. A verified high-impact event can override policy; an unverified LLM assertion cannot.</div></div>
+
+  <div class="grid g2" style="margin-top:28px">
+    <div>
+      <h3>Evidence confidence bands</h3>
+      <div class="bands">
+        <div class="band b-ok"><b>Confirmed</b><span>Direct telemetry or deterministic, reproducible check</span></div>
+        <div class="band b-t"><b>Strong</b><span>Repeatable sandbox test shows the behavior</span></div>
+        <div class="band b-med"><b>Moderate</b><span>Static analysis shows a risky condition; runtime untested</span></div>
+        <div class="band b-info"><b>Tentative</b><span>Heuristic or model hypothesis, uncorroborated</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Graph path validation states</h3>
+      <div class="bands">
+        <div class="band b-v"><b>candidate</b><span>Graph relationships suggest a possible path</span></div>
+        <div class="band b-med"><b>needs_evidence</b><span>One or more critical relationships need confirmation</span></div>
+        <div class="band b-ok"><b>validated</b><span>Required edges and conditions checked against evidence or a reproducible test</span></div>
+        <div class="band b-crit"><b>disproven</b><span>Evidence contradicts the path</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note red"><b>Connectivity ≠ exploitability</b><div>An agent with both file access and network access does not prove it can exfiltrate a sensitive file. Verify effective permissions, tool semantics, execution context and policy constraints.</div></div>
+</div></section>
+
+<!-- ============ 10 EVIDENCE ============ -->
+<section id="evidence"><div class="wrap">
+  <p class="sec-num">10 · Evidence &amp; provenance</p>
+  <h2>What was observed, where, when — and what it proves</h2>
+
+  <div class="grid g3">
+    <div class="card"><span class="tag">Evidence types</span>
+      <ul>
+        <li>GitHub workflow / config excerpt</li>
+        <li>Scanner result with tool and rule version</li>
+        <li>Graph traversal output and edge provenance</li>
+        <li>Sandbox test input, output, exit status</li>
+        <li>CI run / commit / PR reference</li>
+        <li>External advisory or threat intel</li>
+        <li>LLM hypothesis, <em>clearly labeled</em></li>
+      </ul>
+    </div>
+    <div class="card v"><span class="tag">Evidence metadata</span>
+      <ul>
+        <li>Evidence ID and linked finding / observation</li>
+        <li>Source type, URL or artifact reference</li>
+        <li>Collection time and source timestamp</li>
+        <li>Content hash and collector version</li>
+        <li>Trust level and validation status</li>
+        <li>Exact claim supported, and limitations</li>
+        <li>Sanitization / redaction status</li>
+      </ul>
+    </div>
+    <div class="card a"><span class="tag">Display requirements</span>
+      <ul>
+        <li>Sanitized preview by default; authorization for full artifact</li>
+        <li>Link every attack-path edge to its evidence</li>
+        <li>Separate source facts from AgentShield interpretation</li>
+        <li>Never let the model fabricate citations</li>
+        <li>Show contradictory or stale evidence</li>
+        <li>Search results are not proof of maliciousness</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Optional external threat intelligence</h3>
+  <p class="sub">Search corroborates evidence — it is never the engine.</p>
+  <div class="steps">
+    <div class="step"><div class="n">01</div><b>Extract</b><span>Normalized package, version, advisory ID, domain or server name from a finding.</span></div>
+    <div class="step"><div class="n">02</div><b>Query narrowly</b><span>Prefer official vendor advisories and primary sources.</span></div>
+    <div class="step"><div class="n">03</div><b>Store provenance</b><span>Query metadata, title / URL, retrieval time, hash or safe excerpt.</span></div>
+    <div class="step"><div class="n">04</div><b>Map to the graph</b><span>Link source to a specific entity and claim; corroboration ≠ observation.</span></div>
+    <div class="step"><div class="n">05</div><b>Recalculate</b><span>Only when evidence changes a defined risk factor.</span></div>
+  </div>
+  <div class="note"><b>SerpApi usage</b><div>Can gather public advisories and reports about a package, action, MCP server or domain. Show how a source changes or corroborates a specific investigation — and never call something malicious just because search results mention it.</div></div>
+</div></section>
+
+<!-- ============ 11 REMEDIATION ============ -->
+<section id="remediation"><div class="wrap">
+  <p class="sec-num">11 · Remediation workflow</p>
+  <h2>Every fix is proposed, approved, applied and proven</h2>
+
+  <figure><div class="figbox">
+    <svg viewBox="0 0 1080 240" role="img" aria-label="Eleven step remediation pipeline">
+      <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0 0 L10 5 L0 10 z" fill="#4A5170"/></marker></defs>
+      <style>
+        .pb{fill:#151828;stroke:#343A57;stroke-width:1.4;rx:9}
+        .pn{fill:#2DD4BF;font-size:10px;font-family:ui-monospace,Menlo,monospace;text-anchor:middle}
+        .pt{fill:#D7DBEA;font-size:10.5px;font-family:-apple-system,Segoe UI,sans-serif;text-anchor:middle}
+      </style>
+      <!-- row A: steps 1-6 -->
+      <g>
+        <rect class="pb" x="16" y="46" width="155" height="56" rx="9"/><text class="pn" x="93.5" y="66">01</text><text class="pt" x="93.5" y="86">Finding created</text>
+        <rect class="pb" x="195" y="46" width="155" height="56" rx="9"/><text class="pn" x="272.5" y="66">02</text><text class="pt" x="272.5" y="86">Triage &amp; assign</text>
+        <rect class="pb" x="374" y="46" width="155" height="56" rx="9"/><text class="pn" x="451.5" y="66">03</text><text class="pt" x="451.5" y="80">Gather / validate</text><text class="pt" x="451.5" y="93">evidence</text>
+        <rect class="pb" x="553" y="46" width="155" height="56" rx="9"/><text class="pn" x="630.5" y="66">04</text><text class="pt" x="630.5" y="80">Discover graph</text><text class="pt" x="630.5" y="93">context &amp; paths</text>
+        <rect class="pb" x="732" y="46" width="155" height="56" rx="9"/><text class="pn" x="809.5" y="66">05</text><text class="pt" x="809.5" y="80">Generate scoped</text><text class="pt" x="809.5" y="93">proposal</text>
+        <rect class="pb" x="911" y="46" width="155" height="56" rx="9"/><text class="pn" x="988.5" y="66">06</text><text class="pt" x="988.5" y="80">Static validation</text><text class="pt" x="988.5" y="93">+ policy checks</text>
+      </g>
+      <path d="M171 74 H189" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M350 74 H368" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M529 74 H547" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M708 74 H726" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M887 74 H905" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M1066 74 C1078 74 1078 155 1066 155" stroke="#4A5170" stroke-width="1.4" fill="none" marker-end="url(#a5)"/>
+
+      <!-- row B: 7-11 (right to left) -->
+      <g>
+        <rect x="911" y="128" width="155" height="56" rx="9" fill="#1C1733" stroke="#8B5CF6" stroke-width="1.6"/><text class="pn" x="988.5" y="148" fill="#C4B5FD">07</text><text class="pt" x="988.5" y="162" fill="#C4B5FD">Approval</text><text class="pt" x="988.5" y="175" fill="#C4B5FD">(when required)</text>
+        <rect class="pb" x="732" y="128" width="155" height="56" rx="9"/><text class="pn" x="809.5" y="148">08</text><text class="pt" x="809.5" y="162">Create PR / apply</text><text class="pt" x="809.5" y="175">in isolated env</text>
+        <rect class="pb" x="553" y="128" width="155" height="56" rx="9"/><text class="pn" x="630.5" y="148">09</text><text class="pt" x="630.5" y="162">Run CI, security</text><text class="pt" x="630.5" y="175">tests, graph recompute</text>
+        <rect x="374" y="128" width="155" height="56" rx="9" fill="#13261C" stroke="#4ADE80" stroke-width="1.6"/><text class="pn" x="451.5" y="148" fill="#86EFAC">10</text><text class="pt" x="451.5" y="162" fill="#86EFAC">Verify risky path</text><text class="pt" x="451.5" y="175" fill="#86EFAC">is broken</text>
+        <rect x="195" y="128" width="155" height="56" rx="9" fill="#13261C" stroke="#4ADE80" stroke-width="1.6"/><text class="pn" x="272.5" y="148" fill="#86EFAC">11</text><text class="pt" x="272.5" y="162" fill="#86EFAC">Confirm legit</text><text class="pt" x="272.5" y="175" fill="#86EFAC">workflows pass</text>
+        <rect x="16" y="128" width="155" height="56" rx="9" fill="none" stroke="#4A5170" stroke-dasharray="4 4"/>
+        <text class="pt" x="93.5" y="152" fill="#86EFAC">verified_fixed</text>
+        <text class="pt" x="93.5" y="170" fill="#737A96">or keep open / reopened</text>
+      </g>
+      <path d="M905 156 H893" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M726 156 H714" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M547 156 H535" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M368 156 H356" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+      <path d="M189 156 H177" stroke="#4A5170" stroke-width="1.4" marker-end="url(#a5)"/>
+
+      <text x="16" y="222" fill="#737A96" font-size="10.5" font-family="ui-monospace,Menlo,monospace">Approval binds to the exact proposal hash, repo, branch and scope · any proposal change invalidates the previous approval · propose / approve / execute / verify are separate permissions · no auto-merge in the MVP.</text>
+    </svg>
+  </div>
+  <figcaption>Steps 1–6 build the proposal; step 7 is the human gate; steps 8–11 produce the proof required for closure.</figcaption></figure>
+
+  <h3>Proposal &amp; verification — closure requires proof, not a merged PR</h3>
+  <div class="grid g2">
+    <div>
+      <p class="codehdr">Remediation proposal (generic schema)</p>
+      <pre>{
+  <span class="s">"finding_id"</span>: <span class="s">"finding-uuid"</span>,
+  <span class="s">"strategy"</span>: <span class="s">"least_privilege_workflow_permissions"</span>,
+  <span class="s">"summary"</span>: <span class="s">"Restrict workflow token permissions
+              to required scopes"</span>,
+  <span class="s">"proposed_change"</span>: {
+    <span class="s">"file"</span>: <span class="s">".github/workflows/build.yml"</span>,
+    <span class="s">"diff_ref"</span>: <span class="s">"controlled-artifact-reference"</span>
+  },
+  <span class="s">"expected_effect"</span>: {
+    <span class="s">"path_ids_to_recheck"</span>: [<span class="s">"path-uuid"</span>],
+    <span class="s">"risk_reduction_claim"</span>:
+      <span class="s">"Remove unnecessary write capability"</span>
+  },
+  <span class="s">"requires_approval"</span>: <span class="k">true</span>
+}</pre>
+    </div>
+    <div class="card ok" style="border-color:rgba(74,222,128,.3)"><span class="tag" style="color:var(--green)">Verification conditions</span>
+      <ul>
+        <li>The exact approved proposal version was applied or merged</li>
+        <li>Relevant scanner and CI tests pass</li>
+        <li>Target path removed or downgraded for an evidence-backed reason</li>
+        <li><strong>Negative tests</strong> confirm the prohibited action is blocked</li>
+        <li><strong>Positive tests</strong> confirm legitimate operations still work</li>
+        <li>Result links to commit, CI run, policy version and evidence</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ 12 GITHUB / CI ============ -->
+<section id="github"><div class="wrap">
+  <p class="sec-num">12 · GitHub &amp; CI/CD integration</p>
+  <h2>Read by default, write only after explicit approval</h2>
+
+  <div class="tbox"><table>
+    <thead><tr><th>Capability</th><th>MVP behavior</th><th>Guardrail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Repository metadata</strong></td><td>List selected repos, default branch and relevant file paths</td><td>Explicit repository selection and tenant mapping</td></tr>
+      <tr><td><strong>Workflow configuration</strong></td><td>Read <code>.github/workflows</code> files and permissions</td><td>Never execute repository code during ingestion</td></tr>
+      <tr><td><strong>Security / scanner artifacts</strong></td><td>Import supported results; map records to graph entities</td><td>Validate format and source; record scanner version</td></tr>
+      <tr><td><strong>Push / PR webhooks</strong></td><td>Queue targeted graph updates when relevant files change</td><td>Verify signature, deduplicate, handle replay</td></tr>
+      <tr><td><strong>Pull request creation</strong></td><td>Open a proposed-fix branch and PR after approval</td><td>No auto-merge in MVP; show diff and test status</td></tr>
+      <tr><td><strong>CI status</strong></td><td>Post or read verification status where configured</td><td>Least privilege; unverified results never pass</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Suggested CI pipeline — ten steps from checkout to verified merge</h3>
+  <div class="steps">
+    <div class="step"><div class="n">01</div><b>Checkout repo</b><span>Trusted runner</span></div>
+    <div class="step"><div class="n">02</div><b>Validate config</b><span>Workflow / agent config</span></div>
+    <div class="step"><div class="n">03</div><b>Run scans</b><span>Existing SAST, secret and dependency scans</span></div>
+    <div class="step"><div class="n">04</div><b>Upload findings</b><span>Normalized findings artifact</span></div>
+    <div class="step"><div class="n">05</div><b>Ingest</b><span>AgentShield ingestion updates FalkorDB</span></div>
+    <div class="step"><div class="n">06</div><b>Investigate</b><span>Graph investigation on changed entities</span></div>
+    <div class="step"><div class="n">07</div><b>Evaluate risk</b><span>Deterministic risk policy evaluates</span></div>
+    <div class="step"><div class="n">08</div><b>Report</b><span>CI reports findings and evidence links</span></div>
+    <div class="step"><div class="n">09</div><b>Optional PR</b><span>Open remediation PR — never silent</span></div>
+    <div class="step"><div class="n">10</div><b>On merge</b><span>Rerun checks and verify</span></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card"><span class="tag">Incremental updates</span><p>Update only changed graph regions on webhook events. Keep the commit SHA and snapshot per scan; recompute paths touched by changed nodes, policy or advisory data.</p></div>
+    <div class="card r"><span class="tag">Failure behavior</span>
+      <ul><li>Show integration health and last sync</li><li>Mark stale graph data clearly</li><li>Bounded retries and dead-letter handling</li><li>Never silently fail open on enforced controls</li></ul></div>
+  </div>
+</div></section>
+
+<!-- ============ 13 SELF SECURITY ============ -->
+<section id="security"><div class="wrap">
+  <p class="sec-num">13 · Securing AgentShield itself</p>
+  <h2>A security product must meet its own bar</h2>
+
+  <div class="grid g3">
+    <div class="card"><span class="tag">Identity &amp; tenancy</span><p>Tenant-scoped authz on every API, query, artifact and job. RBAC: admin, analyst, developer, auditor. Integration identity separate from users.</p></div>
+    <div class="card a"><span class="tag">Secrets &amp; artifacts</span><p>Secrets manager for App keys, webhooks and LLM credentials. Nothing in graph, prompts or logs. Short-lived authorized download URLs.</p></div>
+    <div class="card v"><span class="tag">Graph &amp; agent boundary</span><p>Allowlisted graph tools, parameterized and capped. Tenant filters inside the query service. Repo text and PRs treated as prompt-injection risk.</p></div>
+    <div class="card r"><span class="tag">Execution &amp; network</span><p>No untrusted code during ingestion. Tests in isolated ephemeral environments. Block private-network SSRF; validate URLs, archives, payloads.</p></div>
+    <div class="card"><span class="tag">Remediation integrity</span><p>Approval binds to proposal hash, repo, branch and scope. Separate propose / approve / execute / verify. Idempotent, audited external actions.</p></div>
+    <div class="card"><span class="tag">Reliability &amp; privacy</span><p>Encrypt in transit and at rest. Retention and deletion rules. Bound tokens, iterations and runtime. No private code to external models without consent.</p></div>
+  </div>
+
+  <h3>Threat model — seven threats, each with a control and a test</h3>
+  <div class="tbox"><table>
+    <thead><tr><th>Threat</th><th>Control &amp; test</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Prompt injection in repo content</strong></td><td>Untrusted content is data, never policy; test override and secret-request attempts</td></tr>
+      <tr><td><strong>Cross-tenant graph disclosure</strong></td><td>Seed two tenants; assert every API and graph path returns only authorized records</td></tr>
+      <tr><td><strong>Overpowered GitHub integration</strong></td><td>Audit installed scopes; prove read-only mode cannot write or merge</td></tr>
+      <tr><td><strong>Malicious remediation diff</strong></td><td>Schema / diff validation, human approval, isolated CI, proposal-hash binding</td></tr>
+      <tr><td><strong>Graph query abuse</strong></td><td>Reject unsupported templates; enforce depth, timeout, row count and tenant filters</td></tr>
+      <tr><td><strong>SSRF through external URLs</strong></td><td>Block loopback, link-local, private ranges, bad redirects and metadata endpoints</td></tr>
+      <tr><td><strong>False “fixed” status</strong></td><td>Attempt closure with failed / missing verification and assert rejection</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<!-- ============ 14 TESTS ============ -->
+<section id="tests"><div class="wrap">
+  <p class="sec-num">14 · Test plan &amp; evaluation</p>
+  <h2>Ten acceptance tests that define “working”</h2>
+
+  <div class="checks">
+    <div class="check">Ingesting the same GitHub event twice creates no duplicate entities or findings</div>
+    <div class="check">A known multi-hop test graph returns the expected path and ordered relationships</div>
+    <div class="check">Removing an access relationship eliminates the path after recomputation</div>
+    <div class="check">Every attack-path step links to evidence or is labeled unverified inference</div>
+    <div class="check">Severity and risk factors reproduce from stored deterministic inputs</div>
+    <div class="check">No remediation applies without approval and a matching proposal hash</div>
+    <div class="check">A finding cannot reach <span class="mono">verified_fixed</span> when tests fail or are missing</div>
+    <div class="check">Cross-tenant API, graph, job and artifact access is denied</div>
+    <div class="check">CI reports stale or failed ingestion instead of an unqualified pass</div>
+    <div class="check">The app sets up from the README in a clean environment</div>
+  </div>
+
+  <h3>Hackathon evaluation evidence — measure it and publish the method</h3>
+  <div class="tbox"><table>
+    <thead><tr><th>Metric</th><th>How to measure</th><th>What to report</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Graph usefulness</strong></td><td>Isolated triage vs graph investigation on the same labeled scenarios</td><td>Discovered and missed paths, with test-set definition</td></tr>
+      <tr><td><strong>Evidence quality</strong></td><td>Audit whether each material claim is supported by cited evidence</td><td>Supported / unsupported claims and sampling method</td></tr>
+      <tr><td><strong>Remediation correctness</strong></td><td>Targeted negative and positive tests before and after the change</td><td>Risky paths blocked, legitimate operations preserved</td></tr>
+      <tr><td><strong>Performance</strong></td><td>End-to-end investigation time and query duration on a fixed dataset</td><td>Dataset size, hardware, run count, median / p95</td></tr>
+      <tr><td><strong>Operational reliability</strong></td><td>Repeat ingestion and investigation; simulate timeouts and retries</td><td>Failure handling, idempotency, reproducibility</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<!-- ============ 15 PLAN ============ -->
+<section id="plan"><div class="wrap">
+  <p class="sec-num">15 · Implementation plan</p>
+  <h2>Smallest complete graph-native investigation first</h2>
+
+  <div class="card" style="padding:4px 20px">
+    <div class="phase"><div class="ph">PHASE 0</div><div><b>Scope &amp; fixtures</b><p>Freeze one scenario: agent, repo, workflow permissions, sensitive resource, one fix.</p><span class="exit">Reproducible dataset and expected results</span></div></div>
+    <div class="phase"><div class="ph">PHASE 1</div><div><b>FalkorDB foundation</b><p>Labels, relationships, idempotent ingestion, indexes, scoped query templates, fixtures.</p><span class="exit">Multi-hop paths from live queries</span></div></div>
+    <div class="phase"><div class="ph">PHASE 2</div><div><b>Backend &amp; findings API</b><p>Projects, sync jobs, findings, evidence, investigations, status, audit, tenant authz.</p><span class="exit">Findings backed by graph entities</span></div></div>
+    <div class="phase"><div class="ph">PHASE 3</div><div><b>Investigation agent</b><p>Typed tools: repo context, reachable resources, advisory trace, evidence retrieval.</p><span class="exit">Conclusions cite path and evidence</span></div></div>
+    <div class="phase"><div class="ph">PHASE 4</div><div><b>Findings UI</b><p>Filters, detail tabs, path steps, evidence panel, ownership, proposal review.</p><span class="exit">Claim → evidence → path is followable</span></div></div>
+    <div class="phase"><div class="ph">PHASE 5</div><div><b>Remediation &amp; verify</b><p>Constrained change, diff validation, approval, isolated tests, graph recompute.</p><span class="exit">Path removed; legit behavior passes</span></div></div>
+    <div class="phase"><div class="ph">PHASE 6</div><div><b>Polish &amp; submit</b><p>Harden webhooks, setup scripts, schema docs, demo video, clean-install test.</p><span class="exit">Reproducible repo, truthful results</span></div></div>
+  </div>
+
+  <h3>Priority tiers</h3>
+  <div class="tiers">
+    <div class="tier p0"><div class="lv">P0 · MUST WORK</div><b>Graph-native core</b>
+      <ul><li>FalkorDB ingestion and traversal</li><li>One useful attack-path investigation</li><li>Evidence-backed finding detail</li><li>One remediation and retest</li><li>README and working demo</li></ul></div>
+    <div class="tier p1"><div class="lv">P1 · ADD IF STABLE</div><b>Business workflow</b>
+      <ul><li>GitHub App onboarding</li><li>Webhook-driven updates</li><li>PR generation with approval</li><li>Team ownership and export</li><li>More than one attack scenario</li></ul></div>
+    <div class="tier p2"><div class="lv">P2 · DEFER</div><b>Expansion</b>
+      <ul><li>Broad runtime gateway support</li><li>Multi-agent persistent memory</li><li>Enterprise SSO and advanced RBAC</li><li>Many CI providers</li><li>Complex threat-intel correlation</li></ul></div>
+  </div>
+</div></section>
+
+<!-- ============ 16 DEMO ============ -->
+<section id="demo"><div class="wrap">
+  <p class="sec-num">16 · FalkorDB hackathon strategy</p>
+  <h2>A three-minute demo that proves the graph matters</h2>
+
+  <div class="timeline">
+    <div class="tl"><div class="t">0:00–0:30</div><div><b>The business problem</b><span>An internal AI coding agent and a repo with several individually moderate findings.</span></div></div>
+    <div class="tl"><div class="t">0:30–1:10</div><div><b>Graph traversal</b><span>Ask for paths from agent / workflow capabilities to restricted resources. Show the live query.</span></div></div>
+    <div class="tl"><div class="t">1:10–1:50</div><div><b>Evidence</b><span>Open each critical edge: permission, config, scan result or test. Label uncertain edges.</span></div></div>
+    <div class="tl"><div class="t">1:50–2:35</div><div><b>Action</b><span>Propose a minimal policy change, approve it, run the test — the path disappears.</span></div></div>
+    <div class="tl"><div class="t">2:35–3:00</div><div><b>Proof</b><span>Legit CI and developer behavior still passes; explain why FalkorDB was essential.</span></div></div>
+  </div>
+
+  <div class="note teal"><b>Demonstrate technically</b><div>Live ingestion and query execution · a multi-hop path that changes prioritization · agent picks controlled graph tools · traceable reasoning with uncertainty labels · a concrete, verified action.</div></div>
+</div></section>
+
+<!-- ============ 17 SCOPE ============ -->
+<section id="scope"><div class="wrap">
+  <p class="sec-num">17 · Assumptions, decisions &amp; exclusions</p>
+  <h2>What we assume, decide and won't build</h2>
+
+  <div class="grid g3">
+    <div class="card"><span class="tag">Assumptions</span>
+      <ul>
+        <li>Audience: businesses using AI coding agents and MCP internally</li>
+        <li>First integration: GitHub repos and CI/CD</li>
+        <li>Track: Agents That Act on Connected Data</li>
+        <li>FalkorDB is essential to attack-path reasoning</li>
+        <li>Demo uses synthetic or public data</li>
+        <li>Core submission work is new event work</li>
+      </ul></div>
+    <div class="card a"><span class="tag">Decisions to confirm</span>
+      <ul>
+        <li>GitHub App permissions: read-only or also open PRs</li>
+        <li>FalkorDB deployment mode, version, client, syntax</li>
+        <li>Which scanner outputs the demo imports</li>
+        <li>Whether the LLM may receive source excerpts, and redaction</li>
+        <li>Mandatory verification checks before closure</li>
+      </ul></div>
+    <div class="card r"><span class="tag">Out of scope for MVP</span>
+      <ul>
+        <li>Universal prompt-injection protection claims</li>
+        <li>Autonomous code changes or auto-merged PRs</li>
+        <li>Arbitrary LLM-generated Cypher</li>
+        <li>Exploitability claims from connectivity alone</li>
+        <li>Every agent framework, MCP server and CI provider</li>
+        <li>Production secrets or customer data in the demo</li>
+      </ul></div>
+  </div>
+
+  <h3>Definition of done — proven by behavior, not by feature count</h3>
+  <p class="sub">A reviewer can run the whole loop end to end — and see a truthful result.</p>
+  <div class="chain">
+    <span class="c">01 Start the project</span><span class="arw">→</span>
+    <span class="c">02 Load sample data into FalkorDB</span><span class="arw">→</span>
+    <span class="c">03 Run a graph-backed investigation</span><span class="arw">→</span>
+    <span class="c">04 Inspect an evidence-linked path</span><span class="arw">→</span>
+    <span class="c">05 Propose a scoped fix</span><span class="arw">→</span>
+    <span class="c">06 Execute controlled verification</span><span class="arw">→</span>
+    <span class="c ok">07 See a truthful result</span>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="fin">
+    <span>Anavykai · AgentShield Graph</span>
+    <span>FalkorDB-native</span>
+    <span>GitHub + CI/CD MVP</span>
+    <span>Evidence before closure</span>
+  </div>
+  <p>All example IDs, counts, findings, scores and payloads on this page are illustrative. A graph path is a candidate relationship, not proof of exploitability.</p>
+</div></footer>
+
+</body>
+</html>
