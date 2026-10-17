@@ -1,9 +1,14 @@
 {
   "name": "agentshield-backend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
     "schema": "node src/scripts/schema.js",
     "seed": "node src/scripts/seed.js",
     "query:paths": "node src/scripts/queryPaths.js",
@@ -11,6 +16,9 @@
     "reset": "node src/scripts/reset.js"
   },
   "dependencies": {
-    "falkordb": "^6.2.7"
+    "@octokit/app": "^16.1.4",
+    "express": "^5.3.0",
+    "falkordb": "^6.2.7",
+    "zod": "^4.6.7"
   }
 }
