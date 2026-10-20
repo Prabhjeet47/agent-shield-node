@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { write } from './client.js'
+import { write as writeTo, GRAPH_NAME, QUERY_TIMEOUT_MS } from './client.js'
 import { LABELS, RELATIONSHIPS, uid } from './model.js'
 
 /**
@@ -36,7 +36,8 @@ export async function loadScenario(dir) {
  * older snapshot_sha afterwards is gone from the source and is deleted. That
  * cleanup is what makes a removed permission actually remove the path.
  */
-export async function ingestSnapshot({ scenario, nodes, edges }, { log = () => {} } = {}) {
+export async function ingestSnapshot({ scenario, nodes, edges }, { log = () => {}, graph = GRAPH_NAME } = {}) {
+  const write = (cypher, params) => writeTo(cypher, params, QUERY_TIMEOUT_MS, graph)
   const { tenant_id, project_id, snapshot_sha, source } = scenario
   const now = new Date().toISOString()
   const stats = { nodes: 0, edges: 0, prunedNodes: 0, prunedEdges: 0 }
@@ -101,7 +102,7 @@ export async function ingestSnapshot({ scenario, nodes, edges }, { log = () => {
     log(`  ${String(params.length).padStart(3)} ${type}`)
   }
 
-  Object.assign(stats, await pruneStale({ tenant_id, project_id, snapshot_sha }))
+  Object.assign(stats, await pruneStale({ tenant_id, project_id, snapshot_sha }, { graph }))
   return stats
 }
 
@@ -109,7 +110,8 @@ export async function ingestSnapshot({ scenario, nodes, edges }, { log = () => {
  * Removes graph elements this tenant/project owns that the current snapshot
  * did not reassert. Edges first, then nodes, so nothing is detached blindly.
  */
-export async function pruneStale({ tenant_id, project_id, snapshot_sha }) {
+export async function pruneStale({ tenant_id, project_id, snapshot_sha }, { graph = GRAPH_NAME } = {}) {
+  const write = (cypher, params) => writeTo(cypher, params, QUERY_TIMEOUT_MS, graph)
   const scope = { tenant_id, project_id, snapshot_sha }
 
   const edgeRes = await write(

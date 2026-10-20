@@ -5,6 +5,11 @@ import { handleWebhook } from "./webhooks.js";
 import { v1 } from "./v1/router.js";
 import { internal } from "./v1/internal.js";
 import { mode as aiMode } from "./ai/client.js";
+import * as store from "./domain/store.js";
+import { exportAudit, importAudit } from "./domain/audit.js";
+import { exportJobs, importJobs } from "./domain/jobs.js";
+import { flush, loadPersisted, persistSoon, registerPersisted } from "./domain/persist.js";
+import { exportOverlays, exportSources, importOverlays, importSources, scanProject } from "./scan/scanner.js";
 
 const app = express();
 
@@ -22,7 +27,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, ai_mode: aiMode(), github: !!config.github }));
+// Any change through the API is persisted (debounced) once the response is sent.
+app.use((req, res, next) => {
+  if (req.method !== "GET") res.on("finish", persistSoon);
+  next();
+});
+
+app.get("/api/health", (req, res) => res.json({ ok: true, ai_mode: aiMode(), github: !!config.github, data_mode: config.dataMode }));
 app.use("/api/v1", v1);
 app.use("/api", githubRoutes);
 
@@ -38,4 +49,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(config.port, () => console.log(`AgentShield API on http://localhost:${config.port} · AI ${aiMode()} mode · GitHub ${config.github ? "on" : "off"}`));
+// ── boot ──────────────────────────────────────────────────────────────────────
+if (config.dataMode === "live") {
+  registerPersisted("store", store.exportState, store.importState);
+  registerPersisted("audit", exportAudit, importAudit);
+  registerPersisted("jobs", exportJobs, importJobs);
+  registerPersisted("sources", exportSources, importSources);
+  registerPersisted("overlays", exportOverlays, importOverlays);
+  const restored = await loadPersisted();
+  console.log(restored ? "Live mode: restored saved state." : "Live mode: starting with an empty project.");
+  // First run (or SCAN_ON_START): scan so the product shows real, graph-derived data.
+  if (config.scanOnStart && (!restored || !store.listScans().length)) scanProject({ reason: "startup", actor: "scanner" });
+  for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => flush().finally(() => process.exit(0)));
+}
+
+app.listen(config.port, () => console.log(
+  `AgentShield API on http://localhost:${config.port} · data ${config.dataMode} · AI ${aiMode()} mode · GitHub ${config.github ? "on" : "off"}`,
+));

@@ -41,6 +41,15 @@ export const config = {
     secret: process.env.AI_SHARED_SECRET || null,
   },
   devUser: { name: process.env.DEV_USER_NAME ?? "S. Shruti", role: process.env.DEV_USER_ROLE ?? "admin" },
+  // live: findings come from scans of real (or sample) repos. demo: the hand-written fixtures.
+  dataMode: process.env.DATA_MODE === "demo" ? "demo" : "live",
+  // Graph tenancy. Auth is not built yet, so one tenant and one project ("default").
+  tenantId: process.env.TENANT_ID ?? "t_default",
+  projectName: process.env.PROJECT_NAME ?? "payments-platform",
+  // Bundled sample repos (fixtures/repos/*) scanned alongside connected GitHub repos.
+  // Set SAMPLE_REPOS= (empty) to scan only real repositories.
+  sampleRepos: (process.env.SAMPLE_REPOS ?? "payments-service").split(",").map((s) => s.trim()).filter(Boolean),
+  scanOnStart: process.env.SCAN_ON_START !== "false",
 };
 
 if (config.ai.url && !config.ai.secret) throw new Error("AI_SERVICE_URL is set, so AI_SHARED_SECRET is required to sign requests and callbacks.");

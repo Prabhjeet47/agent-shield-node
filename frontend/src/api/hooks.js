@@ -15,6 +15,7 @@ export const useAgent = (id) => useQuery({ queryKey: ['agent', id], queryFn: () 
 export const usePolicies = () => useQuery({ queryKey: ['policies'], queryFn: () => api(p('/policies')) })
 export const useAudit = () => useQuery({ queryKey: ['audit'], queryFn: () => api('/audit-events') })
 export const useSettings = () => useQuery({ queryKey: ['settings'], queryFn: () => api(p('/settings')) })
+export const useScans = () => useQuery({ queryKey: ['scans'], queryFn: () => api(p('/scans')), refetchInterval: (q) => (q.state.data?.running ? 1500 : false) })
 export const useIntegrations = () => useQuery({ queryKey: ['integrations'], queryFn: () => api('/integrations') })
 export const useSearch = (q) => useQuery({ queryKey: ['search', q], queryFn: () => api(p(`/search?q=${encodeURIComponent(q)}`)), enabled: q.trim().length > 0, placeholderData: (prev) => prev })
 

@@ -1,0 +1,15 @@
+name: build
+on:
+  pull_request_target:
+  push:
+    branches: [main]
+permissions: write-all
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm test
+      - uses: ./.github/actions/deploy
+        env:
+          DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}

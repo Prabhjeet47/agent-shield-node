@@ -1,5 +1,7 @@
 import { githubApp } from "./github.js";
-import { removeInstallation, removeReposFromInstallation } from "./store.js";
+import { listProjectRepos, removeInstallation, removeReposFromInstallation } from "./store.js";
+import { scanProject } from "./scan/scanner.js";
+import { config } from "./config.js";
 
 // Keep our list in sync when access changes on GitHub's side.
 githubApp?.webhooks.on("installation.deleted", ({ payload }) => removeInstallation(payload.installation.id));
@@ -8,9 +10,14 @@ githubApp?.webhooks.on("installation_repositories.removed", ({ payload }) =>
   removeReposFromInstallation(payload.installation.id, payload.repositories_removed.map((r) => r.id))
 );
 
-githubApp?.webhooks.on("push", ({ payload }) => {
-  // Next step: queue a scan of the changed files for this repo.
-  console.log(`push to ${payload.repository.full_name} at ${payload.after}`);
+// A push to a connected repo's default branch rescans the project, so the graph,
+// findings and attack paths follow the code (and a merged fix closes its path).
+githubApp?.webhooks.on("push", async ({ payload }) => {
+  const repos = await listProjectRepos("default");
+  const watched = repos.find((r) => r.fullName === payload.repository.full_name);
+  const onDefault = payload.ref === `refs/heads/${payload.repository.default_branch}`;
+  console.log(`push to ${payload.repository.full_name} at ${payload.after}${watched && onDefault ? " → rescan" : ""}`);
+  if (watched && onDefault && config.dataMode === "live") scanProject({ reason: `push ${payload.after.slice(0, 7)}`, actor: "github-webhook" });
 });
 
 // Mounted with express.text() so we can check the signature against the exact raw body.

@@ -74,10 +74,54 @@ that positive test is check 3 in `verify.js`.
 One client gotcha: the falkordb Node client only honours an **uppercase**
 `TIMEOUT` option. A lowercase `timeout` is accepted and silently ignored.
 
-## Next (P2)
+## Live product (P2)
 
-Express over the same query layer — `GET /api/findings`,
-`/findings/:id/attack-paths`, `/findings/:id/evidence`, `POST /recompute` —
-with findings *derived* from traversal by deterministic rules, not stored by
-hand. Then a `POST /query/:template` endpoint so `agent-shield-python` can
-call the allowlist.
+`DATA_MODE=live` (default) turns the API into the real product loop. Nothing is
+hand-written any more: findings are **derived** from the graph by deterministic
+rules, and the AI service (`agentshield-ai` repo) investigates, proposes fixes
+and verifies them.
+
+```
+GitHub repo / sample repo ─► scan ─► FalkorDB ─► derive ─► findings · paths · agents · graph
+                                                    │
+     UI ─► investigate ─► AI (A4) ── reads graph only via the allowlist (signed)
+     UI ─► propose fix ─► AI (A6) ── scoped diff from the real file
+     UI ─► submit ─► approve (hash-bound) ─► PR (GitHub App, or simulated for samples)
+     UI ─► verify ─► AI (A8) ── what-if: diff applied in a throwaway graph
+                          └─► all risky reaches gone + normal reaches kept ─► verified_fixed
+```
+
+### Run it end to end
+
+```bash
+docker compose up -d                       # FalkorDB
+cp .env.example .env                       # set AI_SHARED_SECRET (same as the AI service)
+npm install && npm run dev                 # API on :4000, scans the sample repo on first start
+cd ../frontend && npm install && npm run dev   # UI on :5173
+# in agentshield-ai:  make up   (AI service on :8090)   then   make e2e
+```
+
+| Piece | Where |
+|---|---|
+| Scanner: agents.yml, workflows, package.json → snapshot with evidence | `src/scan/` |
+| Advisories (OSV, same-major fix selection) | `src/scan/osv.js` |
+| Findings / paths / agents / graph view derived from templates | `src/domain/derive.js` |
+| Deterministic risk score + confidence bands (LLM never sets severity) | `src/domain/risk.js` |
+| Rescan merge (status/owner/fix survive; verified fixes reopen if seen again) | `store.applyScan` |
+| One fix closes every finding with the same root-cause permission | `store.ingestProposal` |
+| Signed internal API for the AI service: templates, what-if, job failure | `src/v1/internal.js` |
+| Real PRs through the GitHub App, simulated (and merged) for sample repos | `src/remediation/` |
+| Persistence of state, jobs, audit chain and scan sources | `src/domain/persist.js` → `data/` |
+
+New product endpoints: `POST /api/v1/projects/default/scans`, `GET …/scans`,
+`POST …/samples/reset` (restores the bundled sample repo for repeatable demos).
+
+Internal endpoints (HMAC-signed with `AI_SHARED_SECRET`): `POST /api/v1/internal/graph/query/:template`,
+`POST /api/v1/internal/graph/what-if`, `POST /api/v1/internal/ai/:kind/:jobId[/failed]`.
+
+New allowlisted templates: `agent_capabilities`, `vulnerable_packages`, `workflows`,
+`project_graph`, `project_evidence`; `agent_to_sensitive_resource` additionally
+returns per-edge evidence and ids. `npm run verify` still passes unchanged.
+
+Not built yet: authentication / authorisation (every request is the dev user),
+multi-tenant / multi-project, PostgreSQL (state is a JSON file), sandbox runtime tests.

@@ -15,9 +15,20 @@ export function getDb() {
   return dbPromise
 }
 
-export async function getGraph() {
+export async function getGraph(name = GRAPH_NAME) {
   const db = await getDb()
-  return db.selectGraph(GRAPH_NAME)
+  return db.selectGraph(name)
+}
+
+/** Drops a whole graph. Only used for short-lived what-if graphs. */
+export async function dropGraph(name) {
+  if (name === GRAPH_NAME) throw new Error('refusing to drop the primary graph')
+  const graph = await getGraph(name)
+  try {
+    await graph.delete()
+  } catch {
+    // already gone
+  }
 }
 
 export async function closeDb() {
@@ -34,13 +45,13 @@ export async function closeDb() {
  * Note the uppercase TIMEOUT: the client only forwards that spelling.
  * A lowercase `timeout` is accepted by the call and silently ignored.
  */
-export async function read(cypher, params = {}, timeoutMs = QUERY_TIMEOUT_MS) {
-  const graph = await getGraph()
+export async function read(cypher, params = {}, timeoutMs = QUERY_TIMEOUT_MS, graphName = GRAPH_NAME) {
+  const graph = await getGraph(graphName)
   return graph.roQuery(cypher, { params, TIMEOUT: timeoutMs })
 }
 
 /** Write query. Only ingestion and schema setup may call this. */
-export async function write(cypher, params = {}, timeoutMs = QUERY_TIMEOUT_MS) {
-  const graph = await getGraph()
+export async function write(cypher, params = {}, timeoutMs = QUERY_TIMEOUT_MS, graphName = GRAPH_NAME) {
+  const graph = await getGraph(graphName)
   return graph.query(cypher, { params, TIMEOUT: timeoutMs })
 }

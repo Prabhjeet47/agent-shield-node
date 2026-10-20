@@ -1,0 +1,42 @@
+# AgentShield agent declarations for this repository.
+# Every agent, the MCP servers it connects to, the tools those servers expose,
+# and the permission each tool runs with. Scopes are repo-relative globs.
+version: 1
+
+agents:
+  - name: code-assistant
+    kind: ai_coding_agent
+    runtime: ide_extension
+    owner: AppSec
+    model: claude-sonnet
+    reads_untrusted_input: true   # reads PR descriptions and issue text
+    mcp_servers: [filesystem-mcp, github-mcp]
+
+mcp_servers:
+  - name: filesystem-mcp
+    transport: stdio
+    version: 0.4.2
+    tools:
+      - name: read_file
+        mutating: false
+        permissions:
+          - name: fs:read
+            verb: read
+            scope: "src/**"
+      - name: write_file
+        mutating: true
+        permissions:
+          - name: repo:contents:write
+            verb: write
+            scope: "**"
+
+  - name: github-mcp
+    transport: http
+    version: 1.1.0
+    tools:
+      - name: http_request
+        mutating: true
+        permissions:
+          - name: net:egress
+            verb: connect
+            scope: "*"

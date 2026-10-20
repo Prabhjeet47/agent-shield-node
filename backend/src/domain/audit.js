@@ -1,9 +1,15 @@
 import { createHash, randomBytes } from "node:crypto";
 import { RAW } from "../fixtures/audit.js";
+import { config } from "../config.js";
 
 // Append-only, SHA-256 hash-chained audit log (blueprint: audit_events; report §15).
 // Each event's hash covers its content plus the previous hash, so any edit breaks the chain.
-const events = [];
+let events = [];
+
+export const exportAudit = () => events;
+export function importAudit(saved) {
+  events = Array.isArray(saved) ? saved : [];
+}
 
 function hashOf(ev, prev) {
   const { hash, prev_hash, ...body } = ev;
@@ -39,7 +45,7 @@ export function verifyChain() {
 // Seed rows are oldest-last in the fixture; append oldest first so the chain runs forward in time.
 const year = 2026;
 const month = { Oct: 9 };
-for (const [time, actor, kind, action, target, result, detail] of [...RAW].reverse()) {
+for (const [time, actor, kind, action, target, result, detail] of config.dataMode === "demo" ? [...RAW].reverse() : []) {
   const [d, m, hm] = time.split(" ");
   const [h, mi, s] = hm.split(":").map(Number);
   appendAudit({ actor, kind, action, target, result, detail, time: new Date(year, month[m], Number(d), h, mi, s).toISOString() });

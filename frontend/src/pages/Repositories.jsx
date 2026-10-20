@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
 import ConnectGitHub from '../components/ConnectGitHub.jsx'
+import ScanPanel from '../components/ScanPanel.jsx'
 
 // The Connect GitHub flow uses MUI; this theme matches the app's tokens.
 export default function Repositories() {
@@ -18,7 +19,7 @@ export default function Repositories() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline enableColorScheme />
-      <main className="content"><ConnectGitHub /></main>
+      <main className="content"><ScanPanel /><ConnectGitHub /></main>
     </ThemeProvider>
   )
 }

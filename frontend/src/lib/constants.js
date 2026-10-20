@@ -14,6 +14,7 @@ export const TYPES = {
   MCPServer: { label: 'MCP server', shape: 'hex', icon: 'plug', layer: 1 },
   Tool: { label: 'Tool', shape: 'square', icon: 'wrench', layer: 2 },
   Action: { label: 'Action', shape: 'square', icon: 'graph', layer: 2 },
+  Package: { label: 'Package', shape: 'square', icon: 'graph', layer: 2 },
   Permission: { label: 'Permission', shape: 'square', icon: 'lock', layer: 3 },
   Advisory: { label: 'Advisory', shape: 'hex', icon: 'alert', layer: 3 },
   File: { label: 'File', shape: 'cyl', icon: 'file', layer: 4 },

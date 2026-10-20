@@ -6,6 +6,11 @@ import { getJob } from "../domain/jobs.js";
 import { evaluate } from "../fixtures/policies.js";
 import { CLOSED } from "../domain/lifecycle.js";
 import * as ai from "../ai/client.js";
+import { config } from "../config.js";
+import { githubApp } from "../github.js";
+import { listJobs } from "../domain/jobs.js";
+import { fileContent, resetSamples, scanProject, scanStatus } from "../scan/scanner.js";
+import { openPullRequestFor } from "../remediation/pr.js";
 
 // Product API, /api/v1 (blueprint §08). Tenant- and project-scoped; long work returns 202 + job.
 export const v1 = Router();
@@ -18,7 +23,18 @@ v1.param("projectId", (req, res, next, id) => {
 
 // ---------- overview, graph, search ----------
 v1.get("/projects/:projectId/overview", (req, res) => res.json(store.getOverview()));
-v1.get("/projects/:projectId/graph", (req, res) => res.json({ ...store.getGraph(), snapshot: req.query.snapshot ?? "scan-214" }));
+v1.get("/projects/:projectId/graph", (req, res) => res.json({ ...store.getGraph(), snapshot: req.query.snapshot ?? store.getGraph().snapshots[0]?.id ?? "scan-214" }));
+
+// ---------- scans (live mode: findings are derived from these) ----------
+v1.post("/projects/:projectId/scans", (req, res) => {
+  if (store.isDemo()) return res.status(409).json({ error: "demo_mode", message: "Scans run in live mode. Set DATA_MODE=live." });
+  res.status(202).json(jobBody(scanProject({ reason: req.body?.reason ?? "manual", actor: req.user.name })));
+});
+v1.post("/projects/:projectId/samples/reset", (req, res) => {
+  if (store.isDemo()) return res.status(409).json({ error: "demo_mode", message: "Sample repos are scanned in live mode only." });
+  res.status(202).json(jobBody(resetSamples(req.user.name)));
+});
+v1.get("/projects/:projectId/scans", (req, res) => res.json({ scans: store.listScans(), ...scanStatus(), jobs: listJobs("scans").slice(0, 10) }));
 v1.get("/projects/:projectId/attack-paths", (req, res) => res.json({ paths: store.listPaths() }));
 v1.get("/projects/:projectId/search", (req, res) => res.json({ results: store.search(String(req.query.q ?? "")) }));
 
@@ -62,7 +78,16 @@ v1.post("/findings/:id/remediations", (req, res) => {
 });
 v1.post("/remediations/:id/submit", (req, res) => res.json(store.submitRemediation(req.params.id, req.user)));
 v1.post("/remediations/:id/approve", (req, res) => res.json(store.approveRemediation(req.params.id, req.body?.proposal_hash, req.user)));
-v1.post("/remediations/:id/pull-requests", (req, res) => res.json(store.openPullRequest(req.params.id, req.user)));
+v1.post("/remediations/:id/pull-requests", async (req, res, next) => {
+  try {
+    const r = store.assertCanOpenPullRequest(req.params.id);
+    const pr = store.isDemo() ? null : await openPullRequestFor(r, { fileContent });
+    res.json(store.openPullRequest(req.params.id, req.user, pr));
+  } catch (err) {
+    if (err.status) return next(err);
+    next(Object.assign(new Error(`GitHub refused the pull request: ${err.message}`), { status: 502, code: "github_error" }));
+  }
+});
 v1.post("/remediations/:id/verify", (req, res) => {
   const r = store.findRemediation(req.params.id);
   if (!["testing", "failed"].includes(r.state)) return res.status(409).json({ error: "invalid_transition", message: "Open the pull request before verifying." });
@@ -88,7 +113,11 @@ v1.post("/policies/:id/test", (req, res) => {
 
 // ---------- audit, integrations, settings ----------
 v1.get("/audit-events", (req, res) => res.json({ events: listAudit(), chain: verifyChain() }));
-v1.get("/integrations", (req, res) => res.json({ ai: { mode: ai.mode() } }));
+v1.get("/integrations", (req, res) => res.json({
+  ai: { mode: ai.mode(), url: config.ai.url },
+  github: { configured: !!githubApp },
+  data: { mode: config.dataMode, sample_repos: config.sampleRepos, last_scan: store.listScans()[0] ?? null },
+}));
 v1.get("/projects/:projectId/settings", (req, res) => res.json(store.settings()));
 v1.patch("/projects/:projectId/settings/org", (req, res) => res.json(store.updateOrg(req.body ?? {}, req.user)));
 v1.post("/projects/:projectId/members", (req, res) => {
