@@ -1,8 +1,10 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { config } from "../config.js";
-import { createJob, updateJob } from "../domain/jobs.js";
+import { createJob, getJob, updateJob } from "../domain/jobs.js";
 import * as store from "../domain/store.js";
 import { InvestigationResult, ProposalResult, VerificationResult, CONTRACT_VERSION, enforceCitations } from "./contracts.js";
+import { fileContent, mergeIntoSample } from "../scan/scanner.js";
+import { persistSoon } from "../domain/persist.js";
 
 // The only door between this API and the AI services (report §6: intelligence plane).
 // remote: POST work to the AI service; it answers later on /api/v1/internal/ai/* (signed).
@@ -35,7 +37,8 @@ export function accept(kind, jobId, raw) {
   try {
     if (kind === "investigations") {
       const parsed = InvestigationResult.parse(raw);
-      const known = new Set(store.getGraph().edges.map((e) => e.id));
+      // Citable evidence = graph edges (demo/replay) + Evidence records from the last scan (live).
+      const known = new Set([...store.getGraph().edges.map((e) => e.id), ...store.knownEvidenceIds()]);
       const result = store.ingestInvestigation({ ...parsed, claims: enforceCitations(parsed.claims, known) }, known);
       return updateJob(jobId, { status: "succeeded", step: "Investigation stored", result: { investigation_id: result.investigation_id, paths: result.paths.map((p) => ({ title: p.title, state: p.state })) } });
     }
@@ -45,12 +48,21 @@ export function accept(kind, jobId, raw) {
     }
     if (kind === "verifications") {
       const r = store.ingestVerification(VerificationResult.parse(raw));
+      // Sample repos: a verified fix on a simulated PR is merged so the graph follows it.
+      if (r.state === "verified" && r.prSimulated) mergeIntoSample(r);
       return updateJob(jobId, { status: "succeeded", step: `Verification ${r.state}`, result: { remediation_id: r.id, state: r.state } });
     }
   } catch (err) {
     updateJob(jobId, { status: "failed", step: "Result rejected", error: err.issues ? "Result did not match the contract" : err.message });
     throw err;
+  } finally {
+    persistSoon();
   }
+}
+
+// The AI service reports a job it could not complete (no safe fix, graph unavailable…).
+export function fail(kind, jobId, message) {
+  return updateJob(jobId, { status: "failed", step: `AI service could not complete the ${kind.replace(/s$/, "")}`, error: String(message ?? "Failed").slice(0, 500) });
 }
 
 function replay(kind, job, build, delays = [700, 1600]) {
@@ -58,10 +70,19 @@ function replay(kind, job, build, delays = [700, 1600]) {
   setTimeout(() => { try { accept(kind, job.id, build()) } catch (err) { console.error("replay result rejected", err.message) } }, delays[1]);
 }
 
+// A remote job that never reports back must not hang in the UI forever.
+const JOB_TIMEOUT_MS = Number(process.env.AI_JOB_TIMEOUT_MS ?? 10 * 60_000);
+
 function start(kind, ref, payload, build) {
   const job = createJob(kind, ref);
   if (mode() === "remote") {
     dispatch(kind, job, payload).catch((err) => updateJob(job.id, { status: "failed", error: `Could not reach the AI service: ${err.message}` }));
+    setTimeout(() => {
+      const j = getJob(job.id);
+      if (j && !["succeeded", "failed"].includes(j.status)) {
+        updateJob(job.id, { status: "failed", step: "Timed out", error: `The AI service did not report back within ${Math.round(JOB_TIMEOUT_MS / 60_000)} min. Check that it can reach this API (PUBLIC_API_URL / its Node base URL).` });
+      }
+    }, JOB_TIMEOUT_MS).unref();
   } else {
     replay(kind, job, build);
   }
@@ -69,17 +90,43 @@ function start(kind, ref, payload, build) {
 }
 
 // ---------- public API used by routes ----------
-export function startInvestigation({ projectId, findingId, scope, goal, maxHops = 5, maxPaths = 20 }) {
-  return start("investigations", findingId ?? projectId,
-    { project_id: projectId, finding_id: findingId, scope, goal, max_hops: Math.min(maxHops, 5), max_paths: Math.min(maxPaths, 20) },
-    () => replayInvestigation(projectId, findingId));
+// What the AI sees of a finding: facts and graph references, not UI decoration.
+function findingBrief(f) {
+  return {
+    id: f.id, title: f.title, sev: f.sev, score: f.score, status: f.status, repo: f.repo, agent: f.agent ?? null,
+    detection: f.detection, path: f.path ?? null, summary: f.summary, evidence_ids: f.evidence_ids ?? [], refs: f.refs ?? null,
+  };
 }
+const graphScope = () => ({ tenant_id: config.tenantId, project_id: "default" });
+
+export function startInvestigation({ projectId, findingId, scope, goal, maxHops = 5, maxPaths = 20 }) {
+  const finding = findingId ? store.findFinding(findingId) : null;
+  const known = store.listPaths().filter((p) => !finding?.path || p.id === finding.path);
+  return start("investigations", findingId ?? projectId, {
+    ...graphScope(), finding_id: findingId, finding: finding ? findingBrief(finding) : null, scope, goal,
+    max_hops: Math.min(maxHops, 5), max_paths: Math.min(maxPaths, 20),
+    known_paths: known.map((p) => ({ path_id: p.id, state: p.state, ...(p.refs ?? {}) })),
+  }, () => replayInvestigation(projectId, findingId));
+}
+
+// Files the planner may edit, at the commit the last scan read.
+function filesFor(f) {
+  const r = f.refs ?? {};
+  const wanted = r.kind === "path" ? [r.permission_declared_in] : r.kind === "package" ? [r.manifest] : [r.workflow_path];
+  return wanted.filter(Boolean).map((path) => ({ repository: r.repository, path, content: fileContent(r.repository, path) })).filter((x) => x.content != null);
+}
+
 export function startRemediation(findingId) {
-  return start("remediations", findingId, { finding_id: findingId, finding: store.findFinding(findingId) }, () => replayProposal(findingId));
+  const f = store.findFinding(findingId);
+  return start("remediations", findingId, { ...graphScope(), finding_id: findingId, finding: findingBrief(f), files: filesFor(f) }, () => replayProposal(findingId));
 }
 export function startVerification(remediationId) {
   const r = store.findRemediation(remediationId);
-  return start("verifications", remediationId, { remediation_id: r.id, proposal_hash: r.hash, pr: r.pr, path_id: r.path }, () => replayVerification(r));
+  return start("verifications", remediationId, {
+    ...graphScope(), remediation_id: r.id, proposal_hash: r.hash, pr: r.pr, pr_url: r.prUrl ?? null, pr_simulated: !!r.prSimulated, path_id: r.path,
+    finding_ids: r.solves,
+    proposal: { strategy: r.strategy, repository: r.repository, file: r.file, diff: r.diff, refs: r.refs ?? null, path_ids: r.path ? [r.path] : [] },
+  }, () => replayVerification(r));
 }
 
 // ---------- replay builders (stand-ins for the AI team's agents A4, A6, A8) ----------

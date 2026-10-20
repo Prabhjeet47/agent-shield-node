@@ -1,0 +1,12 @@
+{
+  "name": "payments-service",
+  "version": "1.4.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "node-fetch": "2.6.1"
+  }
+}

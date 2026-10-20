@@ -6,11 +6,16 @@ import { POLICIES, SAMPLES, FIELDS, OPS, MODES } from "../fixtures/policies.js";
 import { NODES, EDGES, GRAPH_PATHS, SNAPSHOTS } from "../fixtures/graph.js";
 import { PROJECT, PATHS, VALIDATION, AGENTS as TOP_AGENTS, GRAPH as NEIGHBOURHOOD, HISTORY } from "../fixtures/overview.js";
 import { appendAudit } from "./audit.js";
+import { config } from "../config.js";
 import { CLOSED, REMEDIATION_STEP, TransitionError, manualFindingTransition, pathStateFromSteps } from "./lifecycle.js";
 
-// In-memory project state seeded from fixtures. Each function here is the single place a
-// change happens, so the API routes and the AI callbacks share the same rules.
-// Swap this module for PostgreSQL + FalkorDB without touching the routes.
+// Project state. Each function here is the single place a change happens, so the API
+// routes, the scanner and the AI callbacks share the same rules.
+//
+//   DATA_MODE=live (default): findings, paths, agents and the graph are DERIVED from
+//     FalkorDB by scans (domain/derive.js); fixes and investigations come from the AI
+//     service. State is persisted to disk (domain/persist.js).
+//   DATA_MODE=demo: the original hand-written fixtures, for screenshots and UI work.
 
 const clone = (x) => structuredClone(x);
 const PATH_STATE = { Validated: "validated", "Needs evidence": "needs_evidence", Candidate: "candidate" };
@@ -20,19 +25,11 @@ export function proposalHash(file, diff) {
 }
 export const shortHash = (h) => `${h.slice(0, 11)}…${h.slice(-4)}`;
 
-const state = {
-  project: { id: "default", ...clone(PROJECT) },
-  findings: FINDINGS.map((f) => clone(getFinding(f.id))),
-  paths: PATHS.map((p) => ({
-    id: p.id, title: p.title, sev: p.sev, score: p.score, state: PATH_STATE[p.state.label],
-    steps: p.steps.map(([kind, node, sensitive]) => ({ kind, node, sensitive: !!sensitive })),
-    links: p.links, summary: GRAPH_PATHS.find((g) => g.id === p.id)?.title,
-  })),
-  agents: AGENTS.map((a) => ({ ...clone(a), why: TOP_AGENTS.find((t) => t.name === a.id)?.why ?? a.summary })),
-  remediations: FIXES.map((f) => ({ ...clone(f), hash: proposalHash(f.file, f.diff) })),
+const DEMO = config.dataMode === "demo";
+
+function sharedState() {
+  return {
   policies: POLICIES.map((p) => ({ ...clone(p), history: [{ version: p.version, edited: p.edited }] })),
-  graph: { nodes: clone(NODES), edges: clone(EDGES), paths: clone(GRAPH_PATHS), snapshots: clone(SNAPSHOTS) },
-  investigations: [],
   members: [
     { name: "S. Shruti", email: "s.shruti@northwind.dev", role: "admin", last: "Now" },
     { name: "M. Okafor", email: "m.okafor@northwind.dev", role: "admin", last: "18 min ago" },
@@ -46,15 +43,60 @@ const state = {
   ],
   org: { name: "Northwind Labs", domain: "northwind.dev", region: "in", retention: "400" },
   notifications: { Critical: [1, 1, 1], High: [1, 1, 0], Medium: [1, 0, 0], Low: [1, 0, 0], "Fix needs approval": [1, 1, 1] },
-};
+  };
+}
+
+function demoState() {
+  return {
+
+  project: { id: "default", ...clone(PROJECT) },
+  findings: FINDINGS.map((f) => clone(getFinding(f.id))),
+  paths: PATHS.map((p) => ({
+    id: p.id, title: p.title, sev: p.sev, score: p.score, state: PATH_STATE[p.state.label],
+    steps: p.steps.map(([kind, node, sensitive]) => ({ kind, node, sensitive: !!sensitive })),
+    links: p.links, summary: GRAPH_PATHS.find((g) => g.id === p.id)?.title,
+  })),
+  agents: AGENTS.map((a) => ({ ...clone(a), why: TOP_AGENTS.find((t) => t.name === a.id)?.why ?? a.summary })),
+  remediations: FIXES.map((f) => ({ ...clone(f), hash: proposalHash(f.file, f.diff) })),
+  graph: { nodes: clone(NODES), edges: clone(EDGES), paths: clone(GRAPH_PATHS), snapshots: clone(SNAPSHOTS) },
+  investigations: [],
+    ...sharedState(),
+  };
+}
+
+function liveState() {
+  const base = sharedState();
+  return {
+    ...base,
+    project: { id: "default", org: base.org.name, name: config.projectName, repos: 0, agents: 0, graphUpdated: "never", stale: null },
+    findings: [],
+    paths: [],
+    agents: [],
+    remediations: [],
+    graph: { nodes: [], edges: [], paths: [], snapshots: [] },
+    investigations: [],
+    scans: [],
+    history: [],
+    derived: { neighbourhood: { nodes: [], edges: [] }, validation: { edges: 0, withEvidence: 0 }, evidenceIds: [], repos: [] },
+  };
+}
+
+let state = DEMO ? demoState() : liveState();
+export const isDemo = () => DEMO;
+export const exportState = () => state;
+export function importState(saved) {
+  state = { ...liveState(), ...saved };
+}
 
 const notFound = (what, id) => Object.assign(new Error(`${what} ${id} was not found.`), { status: 404, code: "not_found" });
 const byId = (list, id, what) => list.find((x) => x.id === id) ?? (() => { throw notFound(what, id) })();
 
 // ---------- reads ----------
 export const getProject = () => state.project;
-export const listFindings = () => state.findings;
-export const findFinding = (id) => byId(state.findings, id, "Finding");
+const DAY = 86_400_000;
+const withAge = (f) => { if (f.firstSeen) f.age = Math.max(0, Math.floor((Date.now() - Date.parse(f.firstSeen)) / DAY)); return f };
+export const listFindings = () => state.findings.map(withAge);
+export const findFinding = (id) => withAge(byId(state.findings, id, "Finding"));
 export const listPaths = () => state.paths;
 // Counts are derived from live findings so every page shows the same number.
 const withLiveCounts = (a) => ({ ...a, findings: state.findings.filter((f) => f.agent === a.id && !CLOSED.includes(f.status)).length });
@@ -74,8 +116,12 @@ export function getOverview() {
   const bySev = (s) => open.filter((f) => f.sev === s).length;
   const active = state.remediations.filter((r) => r.state !== "verified");
   const count = (st) => active.filter((r) => r.state === st).length;
+  const verified30d = state.remediations.filter((r) => r.state === "verified" && (!r.verifiedAt || Date.now() - Date.parse(r.verifiedAt) < 30 * DAY)).length;
+  const project = DEMO
+    ? { ...state.project, repos: new Set(state.findings.map((f) => f.repo)).size, agents: state.agents.length }
+    : { ...state.project, repos: state.derived.repos.length, agents: state.agents.length, graphUpdated: ago(state.scans.at(-1)?.finishedAt) };
   return {
-    project: { ...state.project, repos: new Set(state.findings.map((f) => f.repo)).size, agents: state.agents.length },
+    project,
     kpis: {
       openFindings: open.length,
       bySeverity: { crit: bySev("crit"), high: bySev("high"), med: bySev("med"), low: bySev("low") },
@@ -96,20 +142,46 @@ export function getOverview() {
         failed: count("failed"),
         needsYou: count("draft") + count("approval") + count("pr") + count("failed"),
       },
-      verified30d: 7,
+      verified30d: DEMO ? 7 : verified30d,
     },
-    validation: { ...VALIDATION, states: [
+    validation: { ...(DEMO ? VALIDATION : state.derived.validation), states: [
       { label: "Validated", count: state.paths.filter((p) => p.state === "validated").length, tone: "accent" },
       { label: "Needs evidence", count: state.paths.filter((p) => p.state === "needs_evidence").length, tone: "med" },
       { label: "Candidate", count: state.paths.filter((p) => p.state === "candidate").length, tone: "neutral" },
       { label: "Disproven", count: state.paths.filter((p) => p.state === "disproven").length, tone: "neutral" },
     ] },
-    history: { ...HISTORY, today: HISTORY.today.toISOString() },
+    history: DEMO ? { ...HISTORY, today: HISTORY.today.toISOString() } : liveHistory(),
     topPaths: [...state.paths].sort((a, b) => b.score - a.score).slice(0, 3),
     topAgents: listAgents().sort((a, b) => b.score - a.score).map((a) => ({ name: a.id, score: a.score, sev: a.sev, why: a.why })),
-    neighbourhood: NEIGHBOURHOOD,
+    neighbourhood: DEMO ? NEIGHBOURHOOD : state.derived.neighbourhood,
     fixes: active.slice(0, 3),
   };
+}
+
+
+function ago(iso) {
+  if (!iso) return "never";
+  const min = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  return h < 48 ? `${h} h ago` : `${Math.round(h / 24)} days ago`;
+}
+
+// Open findings per day, replayed from scan / fix events (same shape as the demo HISTORY).
+function liveHistory() {
+  const days = 90;
+  const today = new Date();
+  const byDay = new Map();
+  for (const h of state.history) {
+    const day = days - 1 - Math.floor((today - new Date(h.at)) / DAY);
+    if (day < 0 || day >= days) continue;
+    const cur = byDay.get(day) ?? [day, { crit: 0, high: 0, med: 0, low: 0 }, h.text, h.kind];
+    for (const k in h.delta) cur[1][k] += h.delta[k];
+    cur[2] = h.text;
+    byDay.set(day, cur);
+  }
+  return { today: today.toISOString(), days, start: { crit: 0, high: 0, med: 0, low: 0 }, events: [...byDay.values()].sort((a, b) => a[0] - b[0]) };
 }
 
 export function search(q) {
@@ -144,6 +216,78 @@ export function updateFinding(id, patch, user) {
     appendAudit({ actor: user.name, action: "finding.commented", target: id });
   }
   return f;
+}
+
+// ---------- scans (live mode) ----------
+const SEVS = ["crit", "high", "med", "low"];
+const PATH_LABEL = { validated: "Validated", needs_evidence: "Needs evidence", candidate: "Candidate", disproven: "Disproven" };
+const openBySev = () => Object.fromEntries(SEVS.map((k) => [k, state.findings.filter((f) => f.sev === k && !CLOSED.includes(f.status)).length]));
+const clock = () => new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+export const listScans = () => [...state.scans].reverse();
+export const lastScan = () => state.scans.at(-1) ?? null;
+export const knownEvidenceIds = () => new Set(state.derived?.evidenceIds ?? []);
+
+// Merges a fresh derivation into the project. Findings are matched by a stable key,
+// so a rescan keeps status, owner, activity and fixes. Only a verification run may
+// close a finding (lifecycle.js); a scan that no longer sees a condition only flags it.
+export function applyScan(derived, scan) {
+  const before = openBySev();
+  const now = new Date().toISOString();
+  const seen = new Set();
+  const FIELDS = ["title", "sev", "score", "confidence", "repo", "agent", "detection", "path", "summary", "impact", "factors", "steps", "links", "refs", "evidence_ids"];
+  for (const d of derived.findings) {
+    seen.add(d.key);
+    const fields = Object.fromEntries(FIELDS.map((k) => [k, d[k]]));
+    const f = state.findings.find((x) => x.key === d.key);
+    if (f) {
+      const hypotheses = f.evidence.filter((e) => e.hypothesis);
+      Object.assign(f, fields, { evidence: [...d.evidence, ...hypotheses], lastSeen: now, missing: false });
+      if (f.status === "verified_fixed") {
+        f.status = "reopened";
+        f.activity.unshift([clock(), scan.label, "found this condition again after it was verified fixed"]);
+        appendAudit({ actor: "scanner", kind: "system", action: "finding.reopened", target: f.id, detail: { scan: scan.id } });
+      }
+    } else {
+      state.findings.push({
+        ...fields, key: d.key, id: d.id, evidence: d.evidence, status: "open", owner: d.defaultOwner ?? null,
+        firstSeen: now, lastSeen: now, age: 0, missing: false,
+        checks: [["wait", "Verification plan", "Created when a fix is proposed", "—"]],
+        activity: [[clock(), scan.label, d.path ? `opened this finding from path ${d.path}` : "opened this finding"]],
+      });
+      appendAudit({ actor: "scanner", kind: "system", action: "finding.opened", target: d.id, detail: { scan: scan.id, severity: d.sev, score: d.score } });
+    }
+  }
+  for (const f of state.findings) {
+    if (f.key && !seen.has(f.key) && !f.missing && !CLOSED.includes(f.status)) {
+      f.missing = true;
+      f.activity.unshift([clock(), scan.label, "did not find this condition. Run verification to close it."]);
+    }
+  }
+
+  const prev = new Map(state.paths.map((p) => [p.id, p]));
+  state.paths = derived.paths.map((p) => {
+    const old = prev.get(p.id);
+    const keep = old?.stateSource === "investigation" && old.state !== "validated";
+    return {
+      id: p.id, title: p.title, sev: p.sev, score: p.score, state: keep ? old.state : p.state, stateSource: keep ? "investigation" : "scan",
+      steps: p.steps, links: p.links, summary: p.summary, refs: p.refs, evidence_ids: p.evidence_ids, hops: p.hops, key: p.key,
+    };
+  });
+  state.agents = derived.agents;
+  state.graph = {
+    nodes: derived.graph.nodes,
+    edges: derived.graph.edges,
+    paths: state.paths.map((p) => ({ id: p.id, title: p.summary, sev: p.sev, state: PATH_LABEL[p.state] ?? "Candidate" })),
+    snapshots: [{ id: scan.id, label: `${scan.label} · ${clock()}`, commit: scan.commits }, ...state.graph.snapshots.filter((x) => x.id !== scan.id)].slice(0, 10),
+  };
+  state.derived = { neighbourhood: derived.neighbourhood, validation: derived.validation, evidenceIds: derived.evidenceIds, repos: derived.repos };
+
+  const after = openBySev();
+  const delta = Object.fromEntries(SEVS.map((k) => [k, after[k] - before[k]]).filter(([, v]) => v));
+  if (Object.keys(delta).length || !state.history.length) state.history.push({ at: now, delta, text: `${scan.label}: ${derived.repos.map((r) => r.split("/").pop()).join(", ") || "no repositories"}`, kind: "scan" });
+  state.scans = [...state.scans, scan].slice(-20);
+  return { findings: derived.findings.length, open: after };
 }
 
 // ---------- remediations ----------
@@ -181,13 +325,23 @@ export function approveRemediation(id, reviewedHash, user) {
   return stepFor(r);
 }
 
-export function openPullRequest(id, user) {
+export function assertCanOpenPullRequest(id) {
   const r = findRemediation(id);
   if (r.state !== "pr" || !r.approvedBy) throw new TransitionError("A pull request needs an approved proposal first.", "approval_required");
-  const number = 490 + state.remediations.indexOf(r);
-  Object.assign(r, { state: "testing", note: "CI checks running", pr: `${r.repo}#${number}` });
+  return r;
+}
+
+// pr = { ref, url, number, branch, simulated } from remediation/pr.js
+export function openPullRequest(id, user, pr = null) {
+  const r = assertCanOpenPullRequest(id);
+  const info = pr ?? { ref: `${r.repo}#${490 + state.remediations.indexOf(r)}`, simulated: true };
+  Object.assign(r, {
+    state: "testing", pr: info.ref, prUrl: info.url ?? null, prBranch: info.branch ?? null, prSimulated: !!info.simulated,
+    note: info.simulated ? "Simulated PR (GitHub App not connected for this repo) · ready to verify" : "Pull request open · ready to verify",
+  });
   setFindingStatus(r.solves, "pending_verification", "remediation-workflow");
-  appendAudit({ actor: "github-app", kind: "integration", action: "pull_request.created", target: r.pr, detail: { remediation: id, auto_merge: false, opened_by: user.name } });
+  appendAudit({ actor: "github-app", kind: "integration", action: info.simulated ? "pull_request.simulated" : "pull_request.created", target: r.pr,
+    detail: { remediation: id, auto_merge: false, opened_by: user.name, ...(info.url ? { url: info.url } : {}) } });
   return stepFor(r);
 }
 
@@ -200,28 +354,53 @@ export function ingestInvestigation(result, evidenceIds) {
     if (existing) {
       if (existing.state !== p.state) appendAudit({ actor: "risk-engine", kind: "system", action: "path.state_changed", target: existing.id, detail: { from: existing.state, to: p.state } });
       existing.state = p.state;
+      existing.stateSource = "investigation";
     }
   }
   if (result.finding_id) {
     const f = state.findings.find((x) => x.id === result.finding_id);
-    if (f) f.activity.unshift(["Just now", "investigation-agent", `completed ${inv.investigation_id}: ${inv.paths.length} path(s), ${inv.claims.filter((c) => c.kind === "fact").length} cited claim(s)`]);
+    if (f) {
+      f.activity.unshift(["Just now", "investigation-agent", `completed ${inv.investigation_id}: ${inv.paths.length} path(s), ${inv.claims.filter((c) => c.kind === "fact").length} cited claim(s)`]);
+      // Hypotheses are shown so reviewers can test them, never used for scoring (report §11.11).
+      f.evidence = f.evidence.filter((e) => !(e.hypothesis && e.source?.startsWith("investigation-agent")));
+      for (const c of inv.claims.filter((x) => x.kind === "hypothesis").slice(0, 5)) {
+        f.evidence.push({ type: "AI hypothesis", source: `investigation-agent · ${inv.investigation_id}`, trust: "Unverified", hash: "—", when: "just now",
+          claim: c.text, hypothesis: true, code: [[1, "Not used for scoring. Shown so reviewers can test it."]] });
+      }
+      f.investigation = inv.investigation_id;
+    }
   }
   appendAudit({ actor: "investigation-agent", kind: "system", action: "investigation.completed", target: inv.investigation_id,
     detail: { paths: inv.paths.length, evidence_cited: evidenceIds.size, prompt_version: inv.prompt_version ?? "unknown" } });
   return inv;
 }
 
+// Findings that share the root cause: graph paths through the same permission are
+// broken by the same scoped change, so one verified fix closes all of them.
+function sameRootCause(f) {
+  if (f.refs?.kind !== "path" || !f.refs.permission_uid) return [];
+  return state.findings.filter((x) => x.id !== f.id && x.refs?.kind === "path" && x.refs.permission_uid === f.refs.permission_uid && !CLOSED.includes(x.status));
+}
+
 export function ingestProposal(p) {
   const id = `R-0${32 + state.remediations.length}`;
+  const related = sameRootCause(findFinding(p.finding_id));
   const r = {
-    id, title: p.title, repo: findFinding(p.finding_id).repo, solves: [p.finding_id], path: p.path_ids[0],
+    id, title: p.title, repo: findFinding(p.finding_id).repo, solves: [p.finding_id, ...related.map((x) => x.id)], path: p.path_ids[0],
+    paths: [...new Set([...p.path_ids, ...related.map((x) => x.path)].filter(Boolean))],
     step: 0, state: "draft", note: "Draft ready for review", proposedBy: "remediation-planner", age: "just now",
     file: p.file, diff: p.diff, hash: proposalHash(p.file, p.diff), effect: p.expected_effect, risk: p.risk, strategy: p.strategy, summary: p.summary,
     checks: p.checks.map((c) => ["wait", c.name, c.detail]),
+    refs: findFinding(p.finding_id).refs ?? null,
+    repository: findFinding(p.finding_id).refs?.repository ?? null,
   };
   state.remediations.unshift(r);
   const f = findFinding(p.finding_id);
   f.fix = id;
+  for (const x of related) {
+    x.fix = id;
+    x.activity.unshift(["Just now", "remediation-planner", `${id} also breaks this path (same permission as ${f.id})`]);
+  }
   appendAudit({ actor: "remediation-planner", kind: "system", action: "remediation.proposed", target: id, detail: { finding: p.finding_id, proposal_hash: r.hash } });
   return r;
 }
@@ -235,9 +414,16 @@ export function ingestVerification(v) {
     && v.positives.total > 0 && v.positives.passed / v.positives.total >= 0.98 && v.path_state_after !== "unchanged";
   r.checks = v.checks.map((c) => [c.state, c.name, c.detail]);
   if (passed) {
+    r.verifiedAt = new Date().toISOString();
     Object.assign(r, { state: "verified", note: `Verified · negatives ${v.negatives.passed}/${v.negatives.total}, positives ${v.positives.passed}/${v.positives.total}` });
+    const closed = r.solves.map((fid) => state.findings.find((x) => x.id === fid)).filter((x) => x && !CLOSED.includes(x.status));
     setFindingStatus(r.solves, "verified_fixed", "verifier");
-    for (const pid of [r.path].filter(Boolean)) {
+    if (!DEMO && closed.length) {
+      const delta = {};
+      for (const x of closed) delta[x.sev] = (delta[x.sev] ?? 0) - 1;
+      state.history.push({ at: new Date().toISOString(), delta, text: `Fix verified: ${r.title}`, kind: "fix" });
+    }
+    for (const pid of (r.paths ?? [r.path]).filter(Boolean)) {
       const path = state.paths.find((x) => x.id === pid);
       if (path) path.state = "disproven";
     }
